@@ -7,8 +7,7 @@ utils::Fasta::Fasta(const std::string& infile) :
     size(_read(infile)),
     sequences(_sequences),
     identifications(_identifications)
-{
-}
+{}
 
 void utils::Fasta::write_to(std::ostream& os, bool with_identification) const
 {
