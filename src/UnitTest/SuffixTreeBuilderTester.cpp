@@ -8,6 +8,7 @@
 #include <random>
 #include <cassert>
 #include <iterator>
+#include <ctime>
 
 void suffixtree::SuffixTreeBuilderTester::test()
 {
@@ -56,25 +57,25 @@ void suffixtree::SuffixTreeBuilderTester::test_profile(const char* lhs_file_path
     rhs_sequences.reserve(rhs.sequences.size());
     transform_to_pseudo(lhs.sequences.cbegin(), lhs.sequences.cend(), std::back_inserter(lhs_sequences));
     transform_to_pseudo(rhs.sequences.cbegin(), rhs.sequences.cend(), std::back_inserter(rhs_sequences));
-    std::copy(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
-    std::copy(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
+    // std::copy(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
+    // std::copy(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
 
     // classic suffix tree
     suffixtree::SuffixTreeBuilder<char> char_stb(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), NUMBER, NUMBER);
     auto char_result = char_stb.search_for_prefix(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), 3);
-    std::copy(char_result.cbegin(), char_result.cend(), std::ostream_iterator<size_t>(std::cout, ",")); std::cout << std::endl;
+    // std::copy(char_result.cbegin(), char_result.cend(), std::ostream_iterator<size_t>(std::cout, ",")); std::cout << std::endl;
 
     // generate profiles
     std::vector<Profile> lhs_profiles, rhs_profiles;
     lhs_profiles.reserve(lhs_sequences[0].size());
-    lhs_profiles.reserve(rhs_sequences[0].size());
+    rhs_profiles.reserve(rhs_sequences[0].size());
     for (size_t i = 0; i != lhs_sequences[0].size(); ++i) lhs_profiles.emplace_back(lhs_sequences.cbegin(), lhs_sequences.cend(), i);
     for (size_t i = 0; i != rhs_sequences[0].size(); ++i) rhs_profiles.emplace_back(rhs_sequences.cbegin(), rhs_sequences.cend(), i);
-    std::copy(lhs_profiles.cbegin(), lhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl;
-    std::copy(rhs_profiles.cbegin(), rhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl;
+    // std::copy(lhs_profiles.cbegin(), lhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl;
+    // std::copy(rhs_profiles.cbegin(), rhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl;
 
     // build suffix tree
-    std::copy((*lhs_sequences.cbegin()).cbegin(), (*lhs_sequences.cbegin()).cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
+    // std::copy((*lhs_sequences.cbegin()).cbegin(), (*lhs_sequences.cbegin()).cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
     suffixtree::SuffixTreeBuilder<Profile> profile_stb(lhs_profiles.cbegin(), lhs_profiles.cend(), NUMBER, Profile::end_mark);
 
     // test by suffixes
@@ -115,10 +116,10 @@ void suffixtree::SuffixTreeBuilderTester::test_substring(const char* lhs_file_pa
     std::cout << "finished" << std::endl;
 
     // build suffix tree
-    std::cout << "building suffix tree..." << std::flush;
+    std::cout << "building suffix tree..." << std::flush; auto stop = clock();
     // std::copy((*lhs_sequences.cbegin()).cbegin(), (*lhs_sequences.cbegin()).cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
     suffixtree::SuffixTreeBuilder<Profile> profile_stb(lhs_profiles.cbegin(), lhs_profiles.cend(), NUMBER, Profile::end_mark);
-    std::cout << "finished" << std::endl;
+    std::cout << "finished in " << (clock() - stop) << std::endl;
 
     // test by suffixes
     // std::vector<std::vector<Profile>> suffixes = profile_stb._get_all_suffixes();
@@ -127,9 +128,9 @@ void suffixtree::SuffixTreeBuilderTester::test_substring(const char* lhs_file_pa
     // { std::copy(suffixes[i].cbegin(), suffixes[i].cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl; }
 
     // search
-    std::cout << "searching..." << std::flush;
+    std::cout << "searching..." << std::flush; stop = clock();
     auto result = profile_stb.get_identical_substring_with(rhs_profiles.cbegin(), rhs_profiles.cend(), 15);
-    std::cout << "finished" << std::endl;
+    std::cout << "finished in " << (clock() - stop) << std::endl;
     std::cout << result.size() << std::endl;
     for (size_t i = 0; i != result.size(); ++i)
     {

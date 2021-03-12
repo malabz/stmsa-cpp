@@ -15,8 +15,8 @@ namespace pairwise_alignment
                   typename ScoringMatrixType>
         friend auto
         needleman_wunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
-                RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
-                ScoringMatrixType scoring_matrix);
+                        RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
+                        ScoringMatrixType scoring_matrix);
 
         using gap_vector_type = std::vector<size_t>;
         using return_type = std::pair<gap_vector_type, gap_vector_type>;

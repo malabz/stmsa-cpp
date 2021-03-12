@@ -18,7 +18,7 @@ namespace utils
 
         Profile(const Profile& rhs) noexcept;
 
-        Profile(const std::initializer_list<double>& il, char master) noexcept;
+        Profile(const std::initializer_list<double>& il, unsigned char master) noexcept;
 
         Profile() = default;
 
@@ -32,7 +32,7 @@ namespace utils
         static const double _THRESHOLD;
 
         double _relative_frequencies[pseudo::NUMBER];
-        char   _master;
+        unsigned char _master;
     };
 
 }
@@ -50,7 +50,7 @@ utils::Profile::Profile(InputIterator first, InputIterator last, size_t index) n
         _relative_frequencies[i] = static_cast<double>(frequencies[i]) / n;
 
     _master = 0;
-    for (char i = 1; i != pseudo::NUMBER; ++i)
+    for (unsigned char i = 1; i != pseudo::NUMBER; ++i)
         if (_relative_frequencies[i] > _relative_frequencies[_master])
             _master = i;
 }

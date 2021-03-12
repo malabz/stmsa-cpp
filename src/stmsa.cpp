@@ -8,8 +8,9 @@ int main(int argc, char **argv)
 {
     std::cout << "Hello World!\n";
     // Fasta(argv[1]).write_to(std::cout, false);
-    // suffixtree::SuffixTreeBuilderTester::test_profile(argv[1], argv[2]);
-    pairwise_alignment::needleman_wunsh_test();
+    // suffixtree::SuffixTreeBuilderTester::test();
+    suffixtree::SuffixTreeBuilderTester::test_substring(argv[1], argv[2]);
+    // pairwise_alignment::needleman_wunsh_test();
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

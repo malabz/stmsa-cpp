@@ -170,6 +170,9 @@ namespace suffixtree
                 _active_length -= _active_node->_children[*_active_edge]->_length;
                 _active_node = _active_node->_children[*_active_edge];
                 _active_edge = _active_length == 0 ? nullptr : _word + _curr_end - 1 - _active_length;
+
+                // if (_active_edge) std::cout << static_cast<unsigned>(*_active_edge) <<
+                //     (_active_node->_children[*_active_edge] == nullptr ? "n" : "y") << std::endl;
             }
         }
 
@@ -266,10 +269,13 @@ namespace suffixtree
         friend class builder_type;
 
         _Node(size_t first, size_t len, size_t len_from_root, bool is_leef, size_t width, const builder_type* builder) :
-            _builder(builder), _first(first), _length(len), _length_from_root(len_from_root),
-            _width(width), _children(is_leef ? nullptr : new self_type * [width]()), _suffix(nullptr)
-        {
-        }
+            _builder(builder),
+            _first(first),
+            _length(len),
+            _length_from_root(len_from_root),
+            _width(width),
+            _children(is_leef ? nullptr : new self_type * [width]()), _suffix(nullptr)
+        {}
 
         void _split()
         {
