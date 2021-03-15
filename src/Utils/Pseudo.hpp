@@ -1,17 +1,17 @@
 #pragma once
 
-namespace pseudo
+namespace nucleic_acid_pseudo
 {
 
-    enum PseudoChar : unsigned char
-    {
-        GAP     = 0,
-        C       = 1,
-        G       = 2,
-        A       = 3,
-        T       = 4,
-        UNKNOWN = 5,
-        NUMBER  = 6
-    };
+    constexpr unsigned char GAP     = 0;
+    constexpr unsigned char C       = 1;
+    constexpr unsigned char G       = 2;
+    constexpr unsigned char A       = 3;
+    constexpr unsigned char T       = 4;
+    constexpr unsigned char U       = 4;
+    constexpr unsigned char UNKNOWN = 5;
+
+    constexpr unsigned char MAX_ELE = 5;
+    constexpr unsigned char NUMBER  = 6;
 
 }

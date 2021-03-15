@@ -13,10 +13,10 @@ pairwise_alignment::insert_gaps(const std::vector<unsigned char>& sequence, cons
     size_t result_index = 0;
     for (size_t i = 0; i != sequence.size(); ++i)
     {
-        for (size_t j = 0; j != gaps[i]; ++j) result[result_index++] = pseudo::GAP;
+        for (size_t j = 0; j != gaps[i]; ++j) result[result_index++] = nucleic_acid_pseudo::GAP;
         result[result_index++] = sequence[i];
     }
-    for (size_t j = 0; j != gaps.back(); ++j) result[result_index++] = pseudo::GAP;
+    for (size_t j = 0; j != gaps.back(); ++j) result[result_index++] = nucleic_acid_pseudo::GAP;
 
     return result;
 }

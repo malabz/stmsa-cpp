@@ -1,63 +1,82 @@
 #pragma once
 
-#include "Pseudo.hpp"
-
 #include <iterator>
 #include <vector>
 
 namespace utils
 {
 
-    // template <size_t T>
+    template <unsigned char max_element>
     class Profile
     {
     public:
-        friend bool operator==(const Profile& lhs, const Profile& rhs) noexcept;
-        friend bool operator!=(const Profile& lhs, const Profile& rhs) noexcept;
+        using self_type = Profile<max_element>;
 
         template<typename InputIterator>
-        Profile(InputIterator first, InputIterator last, size_t index) noexcept;
+        Profile(InputIterator first, InputIterator last, size_t index) noexcept
+        {
+            constexpr size_t len = max_element + 1;
+            
+            unsigned frequencies[len];
+            memset(frequencies, 0, sizeof(frequencies));
 
-        Profile(const Profile& rhs) noexcept;
+            size_t n = std::distance(first, last);
+            for (size_t i = 0; i != n; ++i, ++first) ++frequencies[(*first)[index]];
 
-        Profile(const std::initializer_list<double>& il, unsigned char master) noexcept;
+            for (size_t i = 0; i != len; ++i)
+                _relative_frequencies[i] = static_cast<double>(frequencies[i]) / n;
 
-        Profile() = default;
+            _master = 0;
+            for (unsigned char i = 1; i != len; ++i)
+                if (_relative_frequencies[i] > _relative_frequencies[_master])
+                    _master = i;
+        }
 
-        Profile& operator=(const Profile& rhs) noexcept;
+        Profile(const self_type& rhs) noexcept
+        {
+            _copy_from(rhs);
+        }
 
-        operator unsigned() const noexcept;
+        Profile(self_type&& rhs) noexcept
+        {
+            _copy_from(rhs);
+        }
 
-        static const Profile end_mark;
+        self_type& operator=(const self_type& rhs) noexcept
+        {
+            _copy_from(rhs);
+            return *this;
+        }
+
+        self_type& operator=(self_type&& rhs) noexcept
+        {
+            _copy_from(rhs);
+            return *this;
+        }
+
+        Profile() = delete;
+
+        ~Profile() = default;
+
+        operator size_t() const noexcept
+        {
+            return _master;
+        }
 
     private:
-        static const double _THRESHOLD;
+        inline void _copy_from(const self_type& rhs) noexcept
+        {
+            _master = rhs._master;
+            memcpy(_relative_frequencies, rhs._relative_frequencies, sizeof(_relative_frequencies));
+        }
 
-        double _relative_frequencies[pseudo::NUMBER];
+        double _relative_frequencies[max_element + 1];
         unsigned char _master;
     };
 
     template <typename CharMatrix>
     std::vector<unsigned char> abstract(const CharMatrix& matrix, size_t row, size_t clm, size_t max_element);
 
-}
-
-template <typename InputIterator>
-utils::Profile::Profile(InputIterator first, InputIterator last, size_t index) noexcept
-{
-    unsigned frequencies[pseudo::NUMBER];
-    memset(frequencies, 0, sizeof(frequencies));
-
-    size_t n = std::distance(first, last);
-    for (size_t i = 0; i != n; ++i, ++first) ++frequencies[(*first)[index]];
-
-    for (size_t i = 0; i != pseudo::NUMBER; ++i)
-        _relative_frequencies[i] = static_cast<double>(frequencies[i]) / n;
-
-    _master = 0;
-    for (unsigned char i = 1; i != pseudo::NUMBER; ++i)
-        if (_relative_frequencies[i] > _relative_frequencies[_master])
-            _master = i;
 }
 
 template <typename CharMatrix>
@@ -71,16 +90,16 @@ std::vector<unsigned char> utils::abstract(const CharMatrix& matrix, size_t row,
 
     for (size_t j = 0; j != clm; ++j)
     {
-        for (size_t i = 0; i != clm; ++i) ++count[matrix[i][j]];
+        for (size_t i = 0; i != row; ++i) ++count[matrix[i][j]];
 
         unsigned char master = 0;
         for (size_t k = 1; k != max_element + 1; ++k)
             if (count[k] > count[master]) master = k;
 
-        result[i] = master;
+        result[j] = master;
         memset(count, 0, count_size);
     }
 
-    delete[] max_element;
+    delete[] count;
     return result;
 }

@@ -16,7 +16,7 @@ namespace pairwise_alignment
               typename ScoringMatrixType>
     auto needleman_wunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
                          RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
-                         ScoringMatrixType scoring_matrix)
+                         const ScoringMatrixType& scoring_matrix)
     {
         return NeedlemanWunsh<RandomAccessIterator1, RandomAccessIterator2, ScoringMatrixType>
                 (lhs_first, lhs_last, rhs_first, rhs_last, scoring_matrix)._align();

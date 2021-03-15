@@ -11,35 +11,34 @@
 namespace suffixtree
 {
 
-    template<typename T>
+    template<typename value_type>
     class SuffixTree
     {
     public:
-
         class Node;
         friend class Node;
 
-        const size_t   length;
-        const T* const word;
-
-        const T      end_mark;
         const size_t width;
-
         Node* const root;
 
+        const size_t length;
+        const value_type* const word;
+
         template<typename InputIterator>
-        SuffixTree(InputIterator first, InputIterator last, size_t max_element, const T& end_mark) :
-            length(std::distance(first, last) + 1),
-            word(_copy_word(first, last, end_mark)),
-            width(max_element + 1),
-            end_mark(end_mark),
+        SuffixTree(InputIterator first, InputIterator last, value_type max_element) :
+            width(static_cast<size_t>(max_element) + 2), // max_element + 1 is the end mark '$'
             root(_new_node(-1, 0, 0, false)),
+
+            length(std::distance(first, last) + 1),
+            word(_copy_word(first, last)),
+
             _active_node(root),
             _active_edge(nullptr),
             _active_length(0),
+
             _remainder(0)
         {
-            for (_curr_end = 1; _curr_end != length + 1; ++_curr_end)
+            for (_curr_end = 1; _curr_end <= length; ++_curr_end)
             { // 每次向后处理一个字符
                 ++_remainder;
                 _previous = nullptr;
@@ -109,7 +108,7 @@ namespace suffixtree
                 if (curr_node == nullptr)
                     return common_prefix_length < threshold ? std::vector<size_t>() : _get_all_beginning_with(last_node, common_prefix_length);
 
-                for (const T* lhs_first = word + curr_node->first, *lhs_end = lhs_first + curr_node->length;
+                for (const value_type* lhs_first = word + curr_node->first, *lhs_end = lhs_first + curr_node->length;
                     lhs_first != lhs_end && first != last; ++lhs_first, ++first, ++common_prefix_length)
                     if (*lhs_first != *first)
                         return common_prefix_length < threshold ? std::vector<size_t>() : _get_all_beginning_with(curr_node, common_prefix_length);
@@ -157,9 +156,9 @@ namespace suffixtree
             return identical_substrings;
         }
 
-        std::vector<std::vector<T>> get_all_suffixes() const
+        std::vector<std::vector<value_type>> get_all_suffixes() const
         {
-            std::vector<std::vector<T>> suffixes;
+            std::vector<std::vector<value_type>> suffixes;
             suffixes.reserve(length);
             std::vector<Node*> stack;
             _get_all_suffixes(root, stack, suffixes);
@@ -167,12 +166,11 @@ namespace suffixtree
         }
 
     private:
-
         template<typename InputIterator>
-        T* _copy_word(InputIterator first, InputIterator last, const T& end_mark) const
+        value_type* _copy_word(InputIterator first, InputIterator last) const
         {
-            T* result = new T[length + 1];
-            *std::copy(first, last, result) = end_mark;
+            value_type* result = new value_type[length];
+            *std::copy(first, last, result) = width - 1;
             return result;
         }
 
@@ -207,11 +205,11 @@ namespace suffixtree
             return new Node(first, len, len_from_root, is_leef, width, this);
         }
 
-        void _get_all_suffixes(const Node* root, std::vector<Node *>& stack, std::vector<std::vector<T>>& suffixes) const
+        void _get_all_suffixes(const Node* root, std::vector<Node *>& stack, std::vector<std::vector<value_type>>& suffixes) const
         {
             if (root->children == nullptr)
             {
-                std::vector<T> curr;
+                std::vector<value_type> curr;
                 size_t len = 0;
                 for (auto np : stack) len += np->length;
                 curr.reserve(len);
@@ -259,34 +257,32 @@ namespace suffixtree
         }
 
         // 活动点
-        Node*    _active_node;      // 活动结点
-        const T* _active_edge;      // 用字符代表的活动边
-        size_t   _active_length;    // 活动长度, 只有在活动边非null时有效
-        T        _active_edge_aux;
+        Node* _active_node;                     // 活动结点
+        const value_type* _active_edge;         // 用字符代表的活动边
+        size_t _active_length;                  // 活动长度, 只有在活动边非null时有效
+        value_type _active_edge_aux;
 
         // 每趟循环临时变量
-        size_t _curr_end;           // 待显式插入后缀的区间, 注意这里所代表的区间形式为(begin_index, end_index)
-        size_t _remainder;          // 待插入后缀数量
-        Node*  _previous;           // 最后创建的节点, 后缀链接时使用
-        T      _current;            // 当前待插入后缀的最后一个元素
+        size_t _curr_end;                       // 待显式插入后缀的区间, 注意这里所代表的区间形式为(begin_index, end_index)
+        size_t _remainder;                      // 待插入后缀数量
+        Node*  _previous;                       // 最后创建的节点, 后缀链接时使用
+        value_type      _current;               // 当前待插入后缀的最后一个元素
     };
 
-    template<typename T>
-    class SuffixTree<T>::Node
+    template<typename value_type>
+    class SuffixTree<value_type>::Node
     {
     public:
-
-        using tree_type = SuffixTree<T>;
+        using tree_type = SuffixTree<value_type>;
         friend class tree_type;
 
         const tree_type* const tree;
+        const size_t width;
+        Node** children;
 
         size_t first;
         size_t length;
         size_t length_from_root;
-
-        const size_t width;
-        Node** children;
 
         ~Node()
         {
@@ -294,15 +290,13 @@ namespace suffixtree
         }
 
     private:
-
         Node(size_t first, size_t len, size_t len_from_root, bool is_leef, size_t width, const tree_type* tree) :
             tree(tree),
+            width(width),
 
-            first(first),
-            length(len),
+            first(first), length(len),
             length_from_root(len_from_root),
 
-            width(width),
             children(is_leef ? nullptr : new Node * [width]()), _suffix(nullptr)
         {}
 
@@ -310,8 +304,7 @@ namespace suffixtree
         {
             Node* next = children[*tree->_active_edge];
 
-            auto new_node = new Node(next->first, tree->_active_length,
-                length_from_root + tree->_active_length, false, width, tree);
+            auto new_node = new Node(next->first, tree->_active_length, length_from_root + tree->_active_length, false, width, tree);
             new_node->children[tree->word[next->first + tree->_active_length]] = next;
 
             next->first += tree->_active_length;

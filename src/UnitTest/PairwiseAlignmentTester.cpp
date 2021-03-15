@@ -7,7 +7,7 @@
 
 void pairwise_alignment::needleman_wunsh_test()
 {
-    static int scoring_matrix[pseudo::NUMBER][pseudo::NUMBER]
+    static int scoring_matrix[nucleic_acid_pseudo::NUMBER][nucleic_acid_pseudo::NUMBER]
     {
         { 0, 0, 0, 0, 0, 0 },
         { 0, 7, -3, -3, -3, 7 },

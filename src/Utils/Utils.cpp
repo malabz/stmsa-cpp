@@ -28,7 +28,7 @@ std::vector<unsigned char> utils::to_pseudo(const std::string& str)
 
 unsigned char* _get_map()
 {
-    using namespace pseudo;
+    using namespace nucleic_acid_pseudo;
 
     static unsigned char map[std::numeric_limits<unsigned char>::max()];
     memset(map, UNKNOWN, sizeof(map));
