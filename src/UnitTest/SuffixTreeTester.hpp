@@ -1,13 +1,14 @@
 #pragma once
 
-#include "../SuffixTree/SuffixTreeBuilder.hpp"
+#include "../SuffixTree/SuffixTree.hpp"
 
 namespace suffixtree
 {
 
-    class SuffixTreeBuilderTester
+    class SuffixTreeTester
     {
     public:
+
         static void test();
 
         static void test_profile(const char* lhs_file_path, const char* rhs_file_path);

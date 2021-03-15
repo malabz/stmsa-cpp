@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <algorithm>
 
@@ -16,7 +18,7 @@ namespace pairwise_alignment
         friend auto
         needleman_wunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
                         RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
-                        ScoringMatrixType scoring_matrix);
+                        const ScoringMatrixType& scoring_matrix);
 
         using gap_vector_type = std::vector<size_t>;
         using return_type = std::pair<gap_vector_type, gap_vector_type>;
@@ -33,7 +35,7 @@ namespace pairwise_alignment
 
         NeedlemanWunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
                        RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
-                       ScoringMatrixType scoring_matrix):
+                       const ScoringMatrixType& scoring_matrix):
 
                 _lhs_first(lhs_first), _lhs_last(lhs_last),
                 _rhs_first(rhs_first), _rhs_last(rhs_last),
@@ -173,7 +175,7 @@ namespace pairwise_alignment
         const size_t _lhs_len, _rhs_len;
 
         // dynamic programing
-        const ScoringMatrixType _scoring_matrix;
+        const ScoringMatrixType& _scoring_matrix;
         d3im _dp_matrix;
         d3pm _pa_matrix; // path
 

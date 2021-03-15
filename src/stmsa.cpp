@@ -2,14 +2,14 @@
 //
 
 #include "UnitTest/PairwiseAlignmentTester.hpp"
-#include "UnitTest/SuffixTreeBuilderTester.hpp"
+#include "UnitTest/SuffixTreeTester.hpp"
 
 int main(int argc, char **argv)
 {
     std::cout << "Hello World!\n";
     // Fasta(argv[1]).write_to(std::cout, false);
-    // suffixtree::SuffixTreeBuilderTester::test();
-    suffixtree::SuffixTreeBuilderTester::test_substring(argv[1], argv[2]);
+    suffixtree::SuffixTreeTester::test();
+    // suffixtree::SuffixTreeTester::test_substring(argv[1], argv[2]);
     // pairwise_alignment::needleman_wunsh_test();
 }
 

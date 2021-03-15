@@ -3,10 +3,12 @@
 #include "Pseudo.hpp"
 
 #include <iterator>
+#include <vector>
 
 namespace utils
 {
 
+    // template <size_t T>
     class Profile
     {
     public:
@@ -35,9 +37,12 @@ namespace utils
         unsigned char _master;
     };
 
+    template <typename CharMatrix>
+    std::vector<unsigned char> abstract(const CharMatrix& matrix, size_t row, size_t clm, size_t max_element);
+
 }
 
-template<typename InputIterator>
+template <typename InputIterator>
 utils::Profile::Profile(InputIterator first, InputIterator last, size_t index) noexcept
 {
     unsigned frequencies[pseudo::NUMBER];
@@ -55,3 +60,27 @@ utils::Profile::Profile(InputIterator first, InputIterator last, size_t index) n
             _master = i;
 }
 
+template <typename CharMatrix>
+std::vector<unsigned char> utils::abstract(const CharMatrix& matrix, size_t row, size_t clm, size_t max_element)
+{
+    std::vector<unsigned char> result(clm);
+
+    size_t count_size = sizeof(size_t) * (max_element + 1);
+    size_t* count = new size_t[max_element + 1];
+    memset(count, 0, count_size);
+
+    for (size_t j = 0; j != clm; ++j)
+    {
+        for (size_t i = 0; i != clm; ++i) ++count[matrix[i][j]];
+
+        unsigned char master = 0;
+        for (size_t k = 1; k != max_element + 1; ++k)
+            if (count[k] > count[master]) master = k;
+
+        result[i] = master;
+        memset(count, 0, count_size);
+    }
+
+    delete[] max_element;
+    return result;
+}

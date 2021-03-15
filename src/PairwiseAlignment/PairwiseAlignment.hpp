@@ -1,3 +1,5 @@
+#pragma once
+
 #include "NeedlemanWunsh.hpp"
 
 #include <vector>

@@ -1,5 +1,4 @@
-#include "../SuffixTree/SuffixTreeBuilder.hpp"
-#include "../UnitTest/SuffixTreeBuilderTester.hpp"
+#include "SuffixTreeTester.hpp"
 #include "../Utils/Fasta.hpp"
 #include "../Utils/Profile.hpp"
 #include "../Utils/Utils.hpp"
@@ -10,7 +9,7 @@
 #include <iterator>
 #include <ctime>
 
-void suffixtree::SuffixTreeBuilderTester::test()
+void suffixtree::SuffixTreeTester::test()
 {
     std::random_device rd;
     std::mt19937 generator(rd());
@@ -25,7 +24,7 @@ void suffixtree::SuffixTreeBuilderTester::test()
                 for (size_t i = 0; i != length; ++i) word.push_back(dist(generator));
                 // std::copy(word.cbegin(), word.cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
 
-                auto suffixes = SuffixTreeBuilder<char>(word.cbegin(), word.cend(), width, width)._get_all_suffixes();
+                auto suffixes = SuffixTree<char>(word.cbegin(), word.cend(), width, width).get_all_suffixes();
                 assert(suffixes.size() == length + 1);
 
                 std::sort(suffixes.begin(), suffixes.end(),
@@ -45,24 +44,22 @@ void suffixtree::SuffixTreeBuilderTester::test()
     }
 }
 
-void suffixtree::SuffixTreeBuilderTester::test_profile(const char* lhs_file_path, const char* rhs_file_path)
+void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const char* rhs_file_path)
 {
     using namespace utils;
     using namespace pseudo;
 
     // preprocess input
     Fasta lhs(lhs_file_path), rhs(rhs_file_path);
-    std::vector<std::vector<unsigned char>> lhs_sequences, rhs_sequences;
-    lhs_sequences.reserve(lhs.sequences.size());
-    rhs_sequences.reserve(rhs.sequences.size());
-    transform_to_pseudo(lhs.sequences.cbegin(), lhs.sequences.cend(), std::back_inserter(lhs_sequences));
-    transform_to_pseudo(rhs.sequences.cbegin(), rhs.sequences.cend(), std::back_inserter(rhs_sequences));
+    std::vector<std::vector<unsigned char>> lhs_sequences(lhs.sequences.size()), rhs_sequences(rhs.sequences.size());
+    transform_to_pseudo(lhs.sequences.cbegin(), lhs.sequences.cend(), lhs_sequences.begin());
+    transform_to_pseudo(rhs.sequences.cbegin(), rhs.sequences.cend(), rhs_sequences.begin());
     // std::copy(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
     // std::copy(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
 
     // classic suffix tree
-    suffixtree::SuffixTreeBuilder<char> char_stb(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), NUMBER, NUMBER);
-    auto char_result = char_stb.search_for_prefix(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), 3);
+    suffixtree::SuffixTree<char> char_st(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), NUMBER, NUMBER);
+    auto char_result = char_st.search_for_prefix(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), 3);
     // std::copy(char_result.cbegin(), char_result.cend(), std::ostream_iterator<size_t>(std::cout, ",")); std::cout << std::endl;
 
     // generate profiles
@@ -76,31 +73,29 @@ void suffixtree::SuffixTreeBuilderTester::test_profile(const char* lhs_file_path
 
     // build suffix tree
     // std::copy((*lhs_sequences.cbegin()).cbegin(), (*lhs_sequences.cbegin()).cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
-    suffixtree::SuffixTreeBuilder<Profile> profile_stb(lhs_profiles.cbegin(), lhs_profiles.cend(), NUMBER, Profile::end_mark);
+    suffixtree::SuffixTree<Profile> profile_st(lhs_profiles.cbegin(), lhs_profiles.cend(), NUMBER, Profile::end_mark);
 
     // test by suffixes
-    std::vector<std::vector<Profile>> suffixes = profile_stb._get_all_suffixes();
+    std::vector<std::vector<Profile>> suffixes = profile_st.get_all_suffixes();
     std::sort(suffixes.begin(), suffixes.end(), [](const std::vector<Profile>& lhs, const std::vector<Profile>& rhs) { return lhs.size() < rhs.size(); });
     for (size_t i = 0; i != suffixes.size(); ++i)
     { std::copy(suffixes[i].cbegin(), suffixes[i].cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl; }
 
     // search
-    auto result = profile_stb.search_for_prefix(rhs_profiles.cbegin(), rhs_profiles.cbegin() + 7, 2);
+    auto result = profile_st.search_for_prefix(rhs_profiles.cbegin(), rhs_profiles.cbegin() + 7, 2);
     std::copy(result.cbegin(), result.cend(), std::ostream_iterator<size_t>(std::cout, ",")); std::cout << std::endl;
 }
 
-void suffixtree::SuffixTreeBuilderTester::test_substring(const char* lhs_file_path, const char* rhs_file_path)
+void suffixtree::SuffixTreeTester::test_substring(const char* lhs_file_path, const char* rhs_file_path)
 {
     using namespace utils;
     using namespace pseudo;
 
     // preprocess input
     Fasta lhs(lhs_file_path), rhs(rhs_file_path);
-    std::vector<std::vector<unsigned char>> lhs_sequences, rhs_sequences;
-    lhs_sequences.reserve(lhs.sequences.size());
-    rhs_sequences.reserve(rhs.sequences.size());
-    transform_to_pseudo(lhs.sequences.cbegin(), lhs.sequences.cend(), std::back_inserter(lhs_sequences));
-    transform_to_pseudo(rhs.sequences.cbegin(), rhs.sequences.cend(), std::back_inserter(rhs_sequences));
+    std::vector<std::vector<unsigned char>> lhs_sequences(lhs.sequences.size()), rhs_sequences(rhs.sequences.size());
+    transform_to_pseudo(lhs.sequences.cbegin(), lhs.sequences.cend(), lhs_sequences.begin());
+    transform_to_pseudo(rhs.sequences.cbegin(), rhs.sequences.cend(), rhs_sequences.begin());
     // std::copy(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
     // std::copy(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
 
@@ -118,18 +113,18 @@ void suffixtree::SuffixTreeBuilderTester::test_substring(const char* lhs_file_pa
     // build suffix tree
     std::cout << "building suffix tree..." << std::flush; auto stop = clock();
     // std::copy((*lhs_sequences.cbegin()).cbegin(), (*lhs_sequences.cbegin()).cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
-    suffixtree::SuffixTreeBuilder<Profile> profile_stb(lhs_profiles.cbegin(), lhs_profiles.cend(), NUMBER, Profile::end_mark);
+    suffixtree::SuffixTree<Profile> profile_st(lhs_profiles.cbegin(), lhs_profiles.cend(), NUMBER, Profile::end_mark);
     std::cout << "finished in " << (clock() - stop) << std::endl;
 
     // test by suffixes
-    // std::vector<std::vector<Profile>> suffixes = profile_stb._get_all_suffixes();
+    // std::vector<std::vector<Profile>> suffixes = profile_st._get_all_suffixes();
     // std::sort(suffixes.begin(), suffixes.end(), [](const std::vector<Profile>& lhs, const std::vector<Profile>& rhs) { return lhs.size() < rhs.size(); });
     // for (size_t i = 0; i != suffixes.size(); ++i)
     // { std::copy(suffixes[i].cbegin(), suffixes[i].cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl; }
 
     // search
     std::cout << "searching..." << std::flush; stop = clock();
-    auto result = profile_stb.get_identical_substring_with(rhs_profiles.cbegin(), rhs_profiles.cend(), 15);
+    auto result = profile_st.get_identical_substring_with(rhs_profiles.cbegin(), rhs_profiles.cend(), 15);
     std::cout << "finished in " << (clock() - stop) << std::endl;
     std::cout << result.size() << std::endl;
     for (size_t i = 0; i != result.size(); ++i)
@@ -141,7 +136,7 @@ void suffixtree::SuffixTreeBuilderTester::test_substring(const char* lhs_file_pa
 }
 
 template<typename T>
-void suffixtree::SuffixTreeBuilderTester::print(const std::vector<std::vector<T>>& vt)
+void suffixtree::SuffixTreeTester::print(const std::vector<std::vector<T>>& vt)
 {
     for (size_t i = 0; i != vt.size(); ++i)
     {

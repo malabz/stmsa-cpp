@@ -18,11 +18,10 @@ utils::Profile::Profile(const std::initializer_list<double>& il, unsigned char m
 
 bool utils::operator==(const Profile& lhs, const Profile& rhs) noexcept
 {
-    // double diff = 0;
-    // for (size_t i = 0; i != pseudo::NUMBER - 1; ++i) // degree of freedom
-    //     diff += std::abs(rhs._relative_frequencies[i] - lhs._relative_frequencies[i]);
-    // return diff < Profile::_THRESHOLD;
-    return lhs._master == rhs._master;
+    double diff = 0;
+    for (size_t i = 0; i != pseudo::NUMBER - 1; ++i) // degree of freedom
+        diff += std::abs(rhs._relative_frequencies[i] - lhs._relative_frequencies[i]);
+    return diff < Profile::_THRESHOLD;
 }
 
 bool utils::operator!=(const Profile& lhs, const Profile& rhs) noexcept
