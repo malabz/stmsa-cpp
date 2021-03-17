@@ -7,7 +7,7 @@
 #include <random>
 #include <cassert>
 #include <iterator>
-#include <ctime>
+#include <chrono>
 
 void suffixtree::SuffixTreeTester::test()
 {
@@ -50,25 +50,31 @@ void suffixtree::SuffixTreeTester::test()
 
 void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const char* rhs_file_path)
 {
+    using namespace std::chrono;
+
     // preprocess input
+    auto stop = system_clock::now();
     utils::Fasta lhs(lhs_file_path), rhs(rhs_file_path);
     std::vector<std::vector<unsigned char>> lhs_sequences(lhs.sequences.size()), rhs_sequences(rhs.sequences.size());
     utils::transform_to_pseudo(lhs.sequences.cbegin(), lhs.sequences.cend(), lhs_sequences.begin());
     utils::transform_to_pseudo(rhs.sequences.cbegin(), rhs.sequences.cend(), rhs_sequences.begin());
+    std::cout << "reading and mapping: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << std::endl;
     // std::copy(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
     // std::copy(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
 
     // classic suffix tree
-    suffixtree::SuffixTree<unsigned char> char_st(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), nucleic_acid_pseudo::MAX_ELE);
-    auto char_result = char_st.search_for_prefix(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), 3);
+    // suffixtree::SuffixTree<unsigned char> char_st(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), nucleic_acid_pseudo::MAX_ELE);
+    // auto char_result = char_st.search_for_prefix(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), 3);
     // std::copy(char_result.cbegin(), char_result.cend(), std::ostream_iterator<size_t>(std::cout, ",")); std::cout << std::endl;
 
-    // generate profiles
+    // profiles
+    stop = system_clock::now();
     std::vector<utils::Profile<nucleic_acid_pseudo::MAX_ELE>> lhs_profiles, rhs_profiles;
-    lhs_profiles.reserve(lhs_sequences[0].size());
+    lhs_profiles.reserve(lhs_sequences[0].size() + 1); // suffix tree '$'
     rhs_profiles.reserve(rhs_sequences[0].size());
     for (size_t i = 0; i != lhs_sequences[0].size(); ++i) lhs_profiles.emplace_back(lhs_sequences.cbegin(), lhs_sequences.cend(), i);
     for (size_t i = 0; i != rhs_sequences[0].size(); ++i) rhs_profiles.emplace_back(rhs_sequences.cbegin(), rhs_sequences.cend(), i);
+    std::cout << "profiles: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << std::endl;
     // std::copy(lhs_profiles.cbegin(), lhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl;
     // std::copy(rhs_profiles.cbegin(), rhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl;
 
@@ -76,25 +82,26 @@ void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const
 
     // build suffix tree
     // std::copy((*lhs_sequences.cbegin()).cbegin(), (*lhs_sequences.cbegin()).cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
-    suffixtree::SuffixTree<unsigned char> profile_st(artificial_sequence.cbegin(), artificial_sequence.cend(), nucleic_acid_pseudo::MAX_ELE);
-
-    // test by suffixes
-    // std::vector<std::vector<Profile<nucleic_acid_pseudo::MAX_ELE>>> suffixes = profile_st.get_all_suffixes();
-    // std::sort(suffixes.begin(), suffixes.end(), [](const std::vector<Profile>& lhs, const std::vector<Profile>& rhs) { return lhs.size() < rhs.size(); });
-    // for (size_t i = 0; i != suffixes.size(); ++i)
-    // { std::copy(suffixes[i].cbegin(), suffixes[i].cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl; }
+    stop = system_clock::now();
+    suffixtree::SuffixTree<unsigned char> st(artificial_sequence.cbegin(), artificial_sequence.cend(), nucleic_acid_pseudo::MAX_ELE);
+    std::cout << "suffix tree: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << std::endl;
 
     // search
-    // auto result = profile_st.search_for_prefix(rhs_profiles.cbegin(), rhs_profiles.cbegin() + 7, 2);
-    // std::copy(result.cbegin(), result.cend(), std::ostream_iterator<size_t>(std::cout, ",")); std::cout << std::endl;
+    lhs_profiles.emplace_back();
+    stop = system_clock::now();
+    auto result = utils::get_similar_substrings(st, lhs_profiles.cbegin(), rhs_profiles.cbegin(), rhs_profiles.cend(), .2, 15);
+    std::cout << "search: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << std::endl;
+    if (result.size()) suffixtree::SuffixTreeTester::print_matrix(result, result.size(), result[0].size());
+    else std::cout << "find fucking nothing\n";
 }
 
-template<typename T>
-void suffixtree::SuffixTreeTester::print(const std::vector<std::vector<T>>& vt)
+template<typename MatrixType>
+static void suffixtree::SuffixTreeTester::print_matrix(const MatrixType& matrix, size_t row, size_t clm)
 {
-    for (size_t i = 0; i != vt.size(); ++i)
+    for (size_t i = 0; i != row; ++i)
     {
-        std::copy(vt[i].cbegin(), vt[i].cend(), std::ostream_iterator<T>(std::cout));
+        for (size_t j = 0; j != clm; ++j)
+            std::cout << matrix[i][j] << ' ';
         std::cout << std::endl;
     }
 }

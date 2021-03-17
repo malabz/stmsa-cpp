@@ -11,10 +11,12 @@
 namespace suffixtree
 {
 
-    template<typename value_type>
+    template<typename T>
     class SuffixTree
     {
     public:
+        using value_type = T;
+
         class Node;
         friend class Node;
 
@@ -106,20 +108,20 @@ namespace suffixtree
             for (Node *last_node = root, *curr_node = last_node->children[*first]; ; last_node = curr_node, curr_node = curr_node->children[*first])
             {
                 if (curr_node == nullptr)
-                    return common_prefix_length < threshold ? std::vector<size_t>() : _get_all_beginning_with(last_node, common_prefix_length);
+                    return common_prefix_length < threshold ? std::vector<size_t>() : get_all_beginning_with(last_node, common_prefix_length);
 
-                for (const value_type* lhs_first = word + curr_node->first, *lhs_end = lhs_first + curr_node->length;
-                    lhs_first != lhs_end && first != last; ++lhs_first, ++first, ++common_prefix_length)
-                    if (*lhs_first != *first)
-                        return common_prefix_length < threshold ? std::vector<size_t>() : _get_all_beginning_with(curr_node, common_prefix_length);
+                for (const value_type* lhs_begin = word + curr_node->first, * lhs_end = lhs_begin + curr_node->length;
+                    lhs_begin != lhs_end && first != last; ++lhs_begin, ++first, ++common_prefix_length)
+                    if (*lhs_begin != *first)
+                        return common_prefix_length < threshold ? std::vector<size_t>() : get_all_beginning_with(curr_node, common_prefix_length);
 
                 if (curr_node->children == nullptr || first == last)
-                    return common_prefix_length < threshold ? std::vector<size_t>() : _get_all_beginning_with(curr_node, common_prefix_length);
+                    return common_prefix_length < threshold ? std::vector<size_t>() : get_all_beginning_with(curr_node, common_prefix_length);
             }
         }
 
         template<typename RandomAccessIterator>
-        std::vector<std::array<size_t, 3>> get_identical_substring_with(RandomAccessIterator first, RandomAccessIterator last, size_t threshold) const
+        std::vector<std::array<size_t, 3>> get_identical_substrings(RandomAccessIterator first, RandomAccessIterator last, size_t threshold) const
         {
             std::vector<std::array<size_t, 3>> identical_substrings;
             const size_t len = last - first;
@@ -138,8 +140,7 @@ namespace suffixtree
                         if (curr_result[i] > lhs_index && curr_result[i] - lhs_index < min_dis)
                             min_dis = curr_result[i] - lhs_index;
 
-                    if (min_dis == std::numeric_limits<size_t>::max() ||
-                        curr_result[0] <= threshold)
+                    if (min_dis == std::numeric_limits<size_t>::max())
                     {
                         ++rhs_index;
                     }
@@ -163,6 +164,23 @@ namespace suffixtree
             std::vector<Node*> stack;
             _get_all_suffixes(root, stack, suffixes);
             return suffixes;
+        }
+
+        std::vector<size_t> get_all_beginning_with(Node* curr_root, size_t to_add) const
+        {
+            std::vector<size_t> ret{ to_add };
+            get_all_beginning_with(curr_root, ret);
+            return ret;
+        }
+
+        void get_all_beginning_with(Node* curr_root, std::vector<size_t>& vsz) const
+        {
+            if (curr_root->children == nullptr)
+                vsz.push_back(length - curr_root->length_from_root);
+            else
+                for (size_t i = 0; i != width; ++i)
+                    if (curr_root->children[i] != nullptr)
+                        get_all_beginning_with(curr_root->children[i], vsz);
         }
 
     private:
@@ -228,23 +246,6 @@ namespace suffixtree
                         stack.pop_back();
                     }
             }
-        }
-
-        std::vector<size_t> _get_all_beginning_with(Node* curr_root, size_t to_add) const
-        {
-            std::vector<size_t> ret{ to_add };
-            _get_all_beginning_with(curr_root, ret);
-            return ret;
-        }
-
-        void _get_all_beginning_with(Node* curr_root, std::vector<size_t>& vsz) const
-        {
-            if (curr_root->children == nullptr)
-                vsz.push_back(length - curr_root->length_from_root);
-            else
-                for (size_t i = 0; i != width; ++i)
-                    if (curr_root->children[i] != nullptr)
-                        _get_all_beginning_with(curr_root->children[i], vsz);
         }
 
         void _delete_tree(Node* tree)

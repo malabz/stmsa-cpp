@@ -32,31 +32,32 @@ namespace utils
                     _master = i;
         }
 
-        Profile(const self_type& rhs) noexcept
-        {
-            _copy_from(rhs);
-        }
+        Profile(const self_type& rhs) noexcept = default;
 
-        Profile(self_type&& rhs) noexcept
-        {
-            _copy_from(rhs);
-        }
+        Profile(self_type&& rhs) noexcept = default;
 
-        self_type& operator=(const self_type& rhs) noexcept
-        {
-            _copy_from(rhs);
-            return *this;
-        }
+        self_type& operator=(const self_type& rhs) noexcept = default;
 
-        self_type& operator=(self_type&& rhs) noexcept
-        {
-            _copy_from(rhs);
-            return *this;
-        }
+        self_type& operator=(self_type&& rhs) noexcept = default;
 
-        Profile() = delete;
+        Profile()
+        {
+            std::fill(_relative_frequencies, _relative_frequencies + max_element + 1, 2.);
+            _master = -1;
+        }
 
         ~Profile() = default;
+
+        double differs_from(const self_type& rhs) const noexcept
+        {
+            constexpr size_t len = max_element + 1;
+
+            double difference = 0;
+            for (size_t i = 0; i != len; ++i)
+                difference += abs(_relative_frequencies[i] - rhs._relative_frequencies[i]);
+
+            return difference;
+        }
 
         operator size_t() const noexcept
         {
@@ -64,18 +65,20 @@ namespace utils
         }
 
     private:
-        inline void _copy_from(const self_type& rhs) noexcept
-        {
-            _master = rhs._master;
-            memcpy(_relative_frequencies, rhs._relative_frequencies, sizeof(_relative_frequencies));
-        }
-
         double _relative_frequencies[max_element + 1];
         unsigned char _master;
     };
 
     template <typename CharMatrix>
     std::vector<unsigned char> abstract(const CharMatrix& matrix, size_t row, size_t clm, size_t max_element);
+
+    template <typename SuffixTreeType, typename RandomAccessIterator1, typename RandomAccessIterator2>
+    std::vector<std::array<size_t, 3>> get_similar_substrings(const SuffixTreeType& suffix_tree, RandomAccessIterator1 lhs_first,
+            RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last, double tolerance, size_t threshold);
+
+    template <typename SuffixTreeType, typename RandomAccessIterator1, typename RandomAccessIterator2>
+    std::vector<size_t> _search_for_prefix(const SuffixTreeType& suffix_tree, RandomAccessIterator1 lhs_first,
+            RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last, double tolerance, size_t threshold);
 
 }
 
@@ -102,4 +105,69 @@ std::vector<unsigned char> utils::abstract(const CharMatrix& matrix, size_t row,
 
     delete[] count;
     return result;
+}
+
+template <typename SuffixTreeType, typename RandomAccessIterator1, typename RandomAccessIterator2>
+std::vector<std::array<size_t, 3>> utils::get_similar_substrings(const SuffixTreeType& suffix_tree, RandomAccessIterator1 lhs_first,
+        RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last, double tolerance, size_t threshold)
+{
+        std::vector<std::array<size_t, 3>> similar_substrings;
+        const size_t rhs_len = rhs_last - rhs_first;
+        size_t lhs_index = 0, rhs_index = 0, rhs_last_end = 0;
+        while (rhs_index < rhs_len)
+        {
+            auto curr_result = _search_for_prefix(suffix_tree, lhs_first, rhs_first + rhs_index, rhs_last, tolerance, threshold);
+            if (curr_result.size() == 0)
+            {
+                ++rhs_index;
+            }
+            else
+            {
+                size_t min_dis = std::numeric_limits<size_t>::max();
+                for (size_t i = 1; i != curr_result.size(); ++i)
+                    if (curr_result[i] > lhs_index && curr_result[i] - lhs_index < min_dis)
+                        min_dis = curr_result[i] - lhs_index;
+
+                if (min_dis == std::numeric_limits<size_t>::max())
+                {
+                    ++rhs_index;
+                }
+                else
+                {
+                    lhs_index += min_dis;
+                    similar_substrings.push_back({ lhs_index, rhs_index, curr_result[0] });
+
+                    lhs_index += curr_result[0];
+                    rhs_index += curr_result[0];
+                    rhs_last_end = rhs_index;
+                }
+            }
+        }
+        return similar_substrings;
+}
+
+template <typename SuffixTreeType, typename RandomAccessIterator1, typename RandomAccessIterator2>
+std::vector<size_t> utils::_search_for_prefix(const SuffixTreeType& suffix_tree, RandomAccessIterator1 lhs_first,
+        RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last, double tolerance, size_t threshold)
+{
+    using Node = typename SuffixTreeType::Node;
+    using value_type = typename SuffixTreeType::value_type;
+    if (tolerance <= 0) return std::vector<size_t>();
+
+    double accumulation = 0;
+    size_t common_prefix_length = 0;
+    for (Node* last_node = suffix_tree.root, * curr_node = last_node->children[*rhs_first]; ;
+            last_node = curr_node, curr_node = curr_node->children[*rhs_first]) // unsigned operator
+    {
+        if (curr_node == nullptr)
+            return common_prefix_length < threshold ? std::vector<size_t>() : suffix_tree.get_all_beginning_with(last_node, common_prefix_length);
+
+        for (RandomAccessIterator1 lhs_begin = lhs_first + curr_node->first, lhs_end = lhs_begin + curr_node->length;
+                lhs_begin != lhs_end && rhs_first != rhs_last; ++lhs_begin, ++rhs_first, ++common_prefix_length)
+            if ((accumulation += lhs_begin->differs_from(*rhs_first)) / (common_prefix_length + 1) > tolerance)
+                return common_prefix_length < threshold ? std::vector<size_t>() : suffix_tree.get_all_beginning_with(curr_node, common_prefix_length);
+
+        if (curr_node->children == nullptr || rhs_first == rhs_last)
+            return common_prefix_length < threshold ? std::vector<size_t>() : suffix_tree.get_all_beginning_with(curr_node, common_prefix_length);
+    }
 }

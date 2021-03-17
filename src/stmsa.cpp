@@ -11,19 +11,19 @@
 #define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #define new DEBUG_NEW
 
+#endif
+
 #include "UnitTest/PairwiseAlignmentTester.hpp"
 #include "UnitTest/SuffixTreeTester.hpp"
-
-#endif
 
 
 int main(int argc, char **argv)
 {
 #ifdef _DEBUG
     _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-
-    // suffixtree::SuffixTreeTester::test();
-    suffixtree::SuffixTreeTester::test_profile(argv[1], argv[2]);
-    // pairwise_alignment::needleman_wunsh_test();
 #endif
+ 
+    // suffixtree::SuffixTreeTester::test();
+    suffixtree::SuffixTreeTester::test_profile("D:\\test-set\\lhs.fasta", "D:\\test-set\\rhs.fasta");
+    // pairwise_alignment::needleman_wunsh_test();
 }

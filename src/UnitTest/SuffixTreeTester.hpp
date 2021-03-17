@@ -13,8 +13,8 @@ namespace suffixtree
 
         static void test_profile(const char* lhs_file_path, const char* rhs_file_path);
 
-        template<typename T>
-        static void print(const std::vector<std::vector<T>>& vt);
+        template<typename MatrixType>
+        static void print_matrix(const MatrixType& matrix, size_t row, size_t clm);
     };
 
 }
