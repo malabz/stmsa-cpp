@@ -6,8 +6,10 @@
 
 #include <random>
 #include <cassert>
-#include <iterator>
 #include <chrono>
+#include <numeric>
+#include <iomanip>
+#include <cmath>
 
 void suffixtree::SuffixTreeTester::test()
 {
@@ -25,7 +27,7 @@ void suffixtree::SuffixTreeTester::test()
             std::vector<unsigned char> word;
             word.reserve(length + 1);
             for (size_t i = 0; i != length; ++i) word.push_back(dist(generator));
-            // std::copy(word.cbegin(), word.cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
+            // std::copy(word.cbegin(), word.cend(), std::ostream_iterator<int>(std::cout)); std::cout << '\n';
 
             auto suffixes = SuffixTree<unsigned char>(word.cbegin(), word.cend(), max_element).get_all_suffixes();
             assert(suffixes.size() == length + 1);
@@ -40,8 +42,8 @@ void suffixtree::SuffixTreeTester::test()
                 assert(lhs.size() == i);
 
                 const std::vector<unsigned char> rhs(word.cend() - i, word.cend());
-                // std::copy(lhs.cbegin(), lhs.cend(), std::ostream_iterator<unsigned int>(std::cout)); std::cout << std::endl;
-                // std::copy(rhs.cbegin(), rhs.cend(), std::ostream_iterator<unsigned int>(std::cout)); std::cout << std::endl;
+                // std::copy(lhs.cbegin(), lhs.cend(), std::ostream_iterator<unsigned int>(std::cout)); std::cout << '\n';
+                // std::copy(rhs.cbegin(), rhs.cend(), std::ostream_iterator<unsigned int>(std::cout)); std::cout << '\n';
                 assert(lhs == rhs);
             }
         }
@@ -58,14 +60,14 @@ void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const
     std::vector<std::vector<unsigned char>> lhs_sequences(lhs.sequences.size()), rhs_sequences(rhs.sequences.size());
     utils::transform_to_pseudo(lhs.sequences.cbegin(), lhs.sequences.cend(), lhs_sequences.begin());
     utils::transform_to_pseudo(rhs.sequences.cbegin(), rhs.sequences.cend(), rhs_sequences.begin());
-    std::cout << "reading and mapping: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << std::endl;
-    // std::copy(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
-    // std::copy(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
+    std::cout << "reading and mapping: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << '\n';
+    // std::copy(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << '\n';
+    // std::copy(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << '\n';
 
     // classic suffix tree
     // suffixtree::SuffixTree<unsigned char> char_st(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), nucleic_acid_pseudo::MAX_ELE);
     // auto char_result = char_st.search_for_prefix(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), 3);
-    // std::copy(char_result.cbegin(), char_result.cend(), std::ostream_iterator<size_t>(std::cout, ",")); std::cout << std::endl;
+    // std::copy(char_result.cbegin(), char_result.cend(), std::ostream_iterator<size_t>(std::cout, ",")); std::cout << '\n';
 
     // profiles
     stop = system_clock::now();
@@ -74,35 +76,61 @@ void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const
     rhs_profiles.reserve(rhs_sequences[0].size());
     for (size_t i = 0; i != lhs_sequences[0].size(); ++i) lhs_profiles.emplace_back(lhs_sequences.cbegin(), lhs_sequences.cend(), i);
     for (size_t i = 0; i != rhs_sequences[0].size(); ++i) rhs_profiles.emplace_back(rhs_sequences.cbegin(), rhs_sequences.cend(), i);
-    std::cout << "profiles: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << std::endl;
-    // std::copy(lhs_profiles.cbegin(), lhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl;
-    // std::copy(rhs_profiles.cbegin(), rhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << std::endl;
+    std::cout << "profiles: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << '\n';
+    // std::copy(lhs_profiles.cbegin(), lhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << '\n';
+    // std::copy(rhs_profiles.cbegin(), rhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << '\n';
 
     auto artificial_sequence = utils::abstract(lhs_sequences, lhs_sequences.size(), lhs_sequences[0].size(), nucleic_acid_pseudo::MAX_ELE);
 
     // build suffix tree
-    // std::copy((*lhs_sequences.cbegin()).cbegin(), (*lhs_sequences.cbegin()).cend(), std::ostream_iterator<int>(std::cout)); std::cout << std::endl;
+    // std::copy((*lhs_sequences.cbegin()).cbegin(), (*lhs_sequences.cbegin()).cend(), std::ostream_iterator<int>(std::cout)); std::cout << '\n';
     stop = system_clock::now();
     suffixtree::SuffixTree<unsigned char> st(artificial_sequence.cbegin(), artificial_sequence.cend(), nucleic_acid_pseudo::MAX_ELE);
-    std::cout << "suffix tree: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << std::endl;
+    std::cout << "suffix tree: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << '\n';
 
     // search
     lhs_profiles.emplace_back();
     stop = system_clock::now();
-    auto result = utils::get_similar_substrings(st, lhs_profiles.cbegin(), rhs_profiles.cbegin(), rhs_profiles.cend(), .2, 15);
-    std::cout << "search: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << std::endl;
-    if (result.size()) suffixtree::SuffixTreeTester::print_matrix(result, result.size(), result[0].size());
-    else std::cout << "find fucking nothing\n";
+    auto result = utils::get_similar_substrings(st, lhs_profiles.cbegin(), rhs_profiles.cbegin(), rhs_profiles.cend(), 2., 31);
+    std::cout << "search: " << duration_cast<microseconds>(std::chrono::system_clock::now() - stop).count() << '\n';
+    std::cout << result.size() << " similar substring(s) found" << '\n';
+    // if (result.size()) suffixtree::SuffixTreeTester::print_matrix(result, result.size(), result[0].size());
+
+    // analyse
+    if (result.size())
+    {
+        size_t coverage = 0;
+        for (size_t i = 0; i != result.size(); ++i) coverage += result[i][2];
+        double relative_coverage = static_cast<double>(coverage * 2) / (lhs_sequences[0].size() + rhs_sequences[0].size());
+        std::cout << "         coverage = " << coverage << '\n';
+        std::cout << "relative_coverage = " << relative_coverage << '\n';
+
+        std::vector<double> differences; differences.reserve(coverage);
+        double difference_max = 0;
+        for (size_t i = 0; i != result.size(); ++i)
+            for (size_t j = 0; j != result[i][2]; ++j)
+            {
+                differences.push_back(lhs_profiles[result[i][0] + j].differs_from(rhs_profiles[result[i][1] + j]));
+                if (differences.back() > difference_max) difference_max = differences.back();
+            }
+        std::cout << "average = " << (std::accumulate(differences.cbegin(), differences.cend(), .0) / differences.size()) << '\n';
+        std::cout << "    max = " << difference_max << '\n';
+
+        size_t statistics[100];
+        memset(statistics, 0, sizeof(statistics));
+        for (size_t i = 0; i != differences.size(); ++i)
+            ++statistics[static_cast<unsigned>(std::floor(differences[i] * 100))];
+        std::copy(statistics, statistics + 100, std::ostream_iterator<size_t>(std::cout, " ")); std::cout << '\n';
+    }
 }
 
 template<typename MatrixType>
-static void suffixtree::SuffixTreeTester::print_matrix(const MatrixType& matrix, size_t row, size_t clm)
+void suffixtree::SuffixTreeTester::print_matrix(const MatrixType& matrix, size_t row, size_t clm)
 {
     for (size_t i = 0; i != row; ++i)
     {
         for (size_t j = 0; j != clm; ++j)
-            std::cout << matrix[i][j] << ' ';
-        std::cout << std::endl;
+            std::cout << std::right << std::setw(8) << matrix[i][j] << ' ';
+        std::cout << '\n';
     }
 }
-

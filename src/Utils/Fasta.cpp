@@ -18,7 +18,7 @@ void utils::Fasta::write_to(std::ostream& os, bool with_identification) const
 }
 
 template<typename InputIterator>
-static void utils::Fasta::write_to(std::ostream& os, InputIterator sequence_first, InputIterator sequence_last)
+void utils::Fasta::write_to(std::ostream& os, InputIterator sequence_first, InputIterator sequence_last)
 {
     if (sequence_first == sequence_last) return;
 
@@ -30,7 +30,7 @@ static void utils::Fasta::write_to(std::ostream& os, InputIterator sequence_firs
 }
 
 template<typename InputIterator1, typename InputIterator2>
-static void utils::Fasta::write_to(std::ostream &os, InputIterator1 sequence_first, InputIterator1 sequence_last,
+void utils::Fasta::write_to(std::ostream &os, InputIterator1 sequence_first, InputIterator1 sequence_last,
     InputIterator2 identification_first)
 {
     if (sequence_first == sequence_last) return;
@@ -76,7 +76,7 @@ size_t utils::Fasta::_read(const std::string& infile)
     }
     _sequences.push_back(current);
 
-    std::cout << "finished" << std::endl;
+    std::cout << "finished, " << _sequences.size() << " sequences found" << std::endl;
     return _sequences.size();
 }
 

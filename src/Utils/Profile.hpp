@@ -54,7 +54,7 @@ namespace utils
 
             double difference = 0;
             for (size_t i = 0; i != len; ++i)
-                difference += abs(_relative_frequencies[i] - rhs._relative_frequencies[i]);
+                difference += std::abs(_relative_frequencies[i] - rhs._relative_frequencies[i]);
 
             return difference;
         }
@@ -154,7 +154,6 @@ std::vector<size_t> utils::_search_for_prefix(const SuffixTreeType& suffix_tree,
     using value_type = typename SuffixTreeType::value_type;
     if (tolerance <= 0) return std::vector<size_t>();
 
-    double accumulation = 0;
     size_t common_prefix_length = 0;
     for (Node* last_node = suffix_tree.root, * curr_node = last_node->children[*rhs_first]; ;
             last_node = curr_node, curr_node = curr_node->children[*rhs_first]) // unsigned operator
@@ -162,12 +161,14 @@ std::vector<size_t> utils::_search_for_prefix(const SuffixTreeType& suffix_tree,
         if (curr_node == nullptr)
             return common_prefix_length < threshold ? std::vector<size_t>() : suffix_tree.get_all_beginning_with(last_node, common_prefix_length);
 
+        const double curr_tolerance = tolerance / (common_prefix_length + curr_node->length);
         for (RandomAccessIterator1 lhs_begin = lhs_first + curr_node->first, lhs_end = lhs_begin + curr_node->length;
                 lhs_begin != lhs_end && rhs_first != rhs_last; ++lhs_begin, ++rhs_first, ++common_prefix_length)
-            if ((accumulation += lhs_begin->differs_from(*rhs_first)) / (common_prefix_length + 1) > tolerance)
+            if (lhs_begin->differs_from(*rhs_first) > curr_tolerance)
                 return common_prefix_length < threshold ? std::vector<size_t>() : suffix_tree.get_all_beginning_with(curr_node, common_prefix_length);
 
         if (curr_node->children == nullptr || rhs_first == rhs_last)
             return common_prefix_length < threshold ? std::vector<size_t>() : suffix_tree.get_all_beginning_with(curr_node, common_prefix_length);
     }
+
 }

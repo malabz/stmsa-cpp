@@ -5,7 +5,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
-#include <Array>
+#include <array>
 #include <limits>
 
 namespace suffixtree

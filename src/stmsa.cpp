@@ -24,6 +24,6 @@ int main(int argc, char **argv)
 #endif
  
     // suffixtree::SuffixTreeTester::test();
-    suffixtree::SuffixTreeTester::test_profile("D:\\test-set\\lhs.fasta", "D:\\test-set\\rhs.fasta");
+    suffixtree::SuffixTreeTester::test_profile("D:\\test-set\\lhs.fasta", "D:\\test-set\\rhsx.fasta");
     // pairwise_alignment::needleman_wunsh_test();
 }
