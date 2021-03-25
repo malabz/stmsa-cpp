@@ -7,23 +7,13 @@
 
 void pairwise_alignment::needleman_wunsh_test()
 {
-    static int scoring_matrix[nucleic_acid_pseudo::NUMBER][nucleic_acid_pseudo::NUMBER]
-    {
-        { 0, 0, 0, 0, 0, 0 },
-        { 0, 7, -3, -3, -3, 7 },
-        { 0, -3, 7, -3, -3, 7 },
-        { 0, -3, -3, 7, -3, 7 },
-        { 0, -3, -3, -3, 7, 7 },
-        { 0, 7, 7, 7, 7, 7 },
-    };
-
     std::vector<unsigned char> lhs({ 2, 3, 2, 3, 4 });
     std::vector<unsigned char> rhs({ 2, 3, 4 });
 
-    auto result = needleman_wunsh(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend(), scoring_matrix);
-    auto lhs_result = insert_gaps(lhs, result.first);
-    auto rhs_result = insert_gaps(rhs, result.second);
+    auto [lhs_gaps, rhs_gaps] = needleman_wunsh(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend(), default_scoring_matrix);
+    auto lhs_aligned = insert_gaps(lhs, lhs_gaps);
+    auto rhs_aligned = insert_gaps(rhs, rhs_gaps);
 
-    print_sequence(std::cout, lhs_result.cbegin(), lhs_result.cend()); std::cout << std::endl;
-    print_sequence(std::cout, rhs_result.cbegin(), rhs_result.cend()); std::cout << std::endl;
+    print_sequence(std::cout, lhs_aligned.cbegin(), lhs_aligned.cend()); std::cout << '\n';
+    print_sequence(std::cout, rhs_aligned.cbegin(), rhs_aligned.cend()); std::cout << '\n';
 }

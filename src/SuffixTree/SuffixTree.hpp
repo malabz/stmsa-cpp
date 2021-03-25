@@ -1,8 +1,11 @@
 #pragma once
 
+#ifdef _DEBUG
+    #include <iostream>
+#endif
+
 #include <vector>
 #include <iterator>
-#include <iostream>
 #include <algorithm>
 #include <cstring>
 #include <array>

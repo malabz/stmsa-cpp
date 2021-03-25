@@ -26,6 +26,17 @@ std::vector<unsigned char> utils::to_pseudo(const std::string& str)
     return pseu;
 }
 
+std::string utils::from_pseudo(const std::vector<unsigned char>& pseu)
+{
+    static constexpr char map[nucleic_acid_pseudo::NUMBER]{ '-', 'c', 'g', 'a', 't', 'n' };
+
+    std::string str;
+    str.reserve(pseu.size());
+
+    for (auto i : pseu) str.push_back(map[i]);
+    return str;
+}
+
 unsigned char* _get_map()
 {
     using namespace nucleic_acid_pseudo;
@@ -33,7 +44,7 @@ unsigned char* _get_map()
     static unsigned char map[std::numeric_limits<unsigned char>::max()];
     memset(map, UNKNOWN, sizeof(map));
 
-    map['-'] = GAP;
+    // map['-'] = GAP; // we could not process sequences with '-'
     map['c'] = map['C'] = C;
     map['g'] = map['G'] = G;
     map['a'] = map['A'] = A;
@@ -47,4 +58,16 @@ static const unsigned char* _map = _get_map();
 inline unsigned char utils::to_pseudo(char ch)
 {
     return _map[ch];
+}
+
+void utils::print_duration(std::chrono::system_clock::time_point time_point, const std::string& info)
+{
+    using namespace std::chrono;
+    std::cout << info << ": " << duration_cast<microseconds>(system_clock::now() - time_point).count();
+}
+
+void utils::print_duration(std::chrono::system_clock::time_point time_point)
+{
+    using namespace std::chrono;
+    std::cout << duration_cast<microseconds>(system_clock::now() - time_point).count();
 }

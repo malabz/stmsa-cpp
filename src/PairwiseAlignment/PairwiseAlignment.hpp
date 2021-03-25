@@ -1,12 +1,23 @@
 #pragma once
 
 #include "NeedlemanWunsh.hpp"
+#include "../Utils/Pseudo.hpp"
 
 #include <vector>
 #include <iostream>
 
 namespace pairwise_alignment
 {
+
+    constexpr int default_scoring_matrix[nucleic_acid_pseudo::NUMBER][nucleic_acid_pseudo::NUMBER]
+    { // '-' dismissed
+        { 0,  0,  0,  0,  0, 0 },
+        { 0,  7, -3, -3, -3, 7 },
+        { 0, -3,  7, -3, -3, 7 },
+        { 0, -3, -3,  7, -3, 7 },
+        { 0, -3, -3, -3,  7, 7 },
+        { 0,  7,  7,  7,  7, 7 },
+    };
 
     std::vector<unsigned char>
     insert_gaps(const std::vector<unsigned char>& sequence, const std::vector<size_t>& gaps);

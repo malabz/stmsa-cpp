@@ -21,7 +21,7 @@ namespace pairwise_alignment
                         const ScoringMatrixType& scoring_matrix);
 
         using gap_vector_type = std::vector<size_t>;
-        using return_type = std::pair<gap_vector_type, gap_vector_type>;
+        using return_type = std::tuple<gap_vector_type, gap_vector_type>;
 
         // n-dimension int matrix
         using d1im = std::vector<int>;
@@ -57,7 +57,7 @@ namespace pairwise_alignment
             _inisialise();
             _do_dp();
             _trace_back();
-            return std::make_pair(std::move(_lhs_gaps), std::move(_rhs_gaps));
+            return { std::move(_lhs_gaps), std::move(_rhs_gaps) };
         }
 
         void _inisialise()
