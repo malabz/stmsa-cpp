@@ -10,6 +10,7 @@
 #include <cstring>
 #include <array>
 #include <limits>
+// #include <unordered_set>
 
 namespace suffixtree
 {
@@ -128,35 +129,44 @@ namespace suffixtree
         {
             std::vector<std::array<size_t, 3>> identical_substrings;
             const size_t len = last - first;
-            size_t lhs_index = 0, rhs_index = 0, rhs_last_end = 0;
-            while (rhs_index < len)
+
+            // auto set_array = new std::unordered_set<size_t>*[length]();
+            for (size_t rhs_index = 0; rhs_index < len; )
             {
-                auto curr_result = search_for_prefix(first + rhs_index, last, threshold);
-                if (curr_result.size() == 0)
+                auto found = search_for_prefix(first + rhs_index, last, threshold);
+
+                if (found.size() == 0)
                 {
                     ++rhs_index;
                 }
                 else
                 {
-                    size_t min_dis = std::numeric_limits<size_t>::max();
-                    for (size_t i = 1; i != curr_result.size(); ++i)
-                        if (curr_result[i] > lhs_index && curr_result[i] - lhs_index < min_dis)
-                            min_dis = curr_result[i] - lhs_index;
+                    // const size_t rhs_bgn = rhs_index;
+                    // const size_t rhs_end = rhs_index + found[0];
 
-                    if (min_dis == std::numeric_limits<size_t>::max())
-                    {
-                        ++rhs_index;
-                    }
-                    else
-                    {
-                        lhs_index += min_dis;
-                        identical_substrings.push_back({ lhs_index, rhs_index, curr_result[0] });
-                        lhs_index += curr_result[0];
-                        rhs_index += curr_result[0];
-                        rhs_last_end = rhs_index;
-                    }
+                    for (size_t i = 1; i != found.size(); ++i)
+                        identical_substrings.push_back(std::array<size_t, 3>({ found[i], rhs_index, found[0] }));
+
+                    // {
+                    //     const size_t lhs_bgn = found[i];
+                    //     const size_t lhs_end = found[i] + found[0];
+
+                    //     auto set = set_array[lhs_end];
+                    //     if (set == nullptr || set->find(rhs_end) == set->cend())
+                    //     {
+                    //         identical_substrings.push_back(std::array<size_t, 3>({ lhs_bgn, rhs_bgn, found[0] }));
+
+                    //         if (set == nullptr) set_array[lhs_end] = new std::unordered_set<size_t>();
+                    //         set_array[lhs_end]->insert(rhs_end);
+                    //     }
+                    // }
+
+                    rhs_index += found[0] - threshold + 1;
                 }
             }
+
+            // for (size_t i = 0; i != length; ++i) if (set_array[i]) delete set_array[i];
+            // delete[] set_array;
             return identical_substrings;
         }
 

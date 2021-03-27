@@ -24,8 +24,8 @@ namespace star_alignment
             bool operator==(const indel& rhs)  { return index == rhs.index && number == rhs.number; }
         };
 
-        using triple = size_t[3];
-        using quadra = size_t[4];
+        using triple = std::array<size_t, 3>;
+        using quadra = std::array<size_t, 4>;
 
         StarAligner(const std::vector<sequence_type>& sequences);
 
@@ -40,6 +40,7 @@ namespace star_alignment
         std::vector<sequence_type> _insert_gaps(const std::vector<std::vector<indel>>& gaps) const;
 
         // support
+        static std::vector<triple> _optimal_path(const std::vector<triple>& identical_substrings);
         static void _converse(const std::vector<size_t>& src_gaps, std::vector<indel>& des_gaps, size_t start);
         static std::vector<indel> _add(const std::vector<indel>& lhs, const std::vector<indel>& rhs);
         static std::vector<indel> _minus(const std::vector<indel>& lhs, const std::vector<indel>& rhs);

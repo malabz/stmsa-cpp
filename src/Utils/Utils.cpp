@@ -63,7 +63,7 @@ inline unsigned char utils::to_pseudo(char ch)
 void utils::print_duration(std::chrono::system_clock::time_point time_point, const std::string& info)
 {
     using namespace std::chrono;
-    std::cout << info << ": " << duration_cast<microseconds>(system_clock::now() - time_point).count();
+    std::cout << info << ": " << duration_cast<microseconds>(system_clock::now() - time_point).count() << " us";
 }
 
 void utils::print_duration(std::chrono::system_clock::time_point time_point)

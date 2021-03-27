@@ -18,6 +18,7 @@
 #include "StarAlignment/StarAligner.hpp"
 #include "Utils/Fasta.hpp"
 #include "Utils/Utils.hpp"
+#include "DAGLongestPath/DAGLongestPath.hpp"
 
 #include <fstream>
 
@@ -25,15 +26,11 @@
 int main(int argc, char **argv)
 {
 #ifdef _DEBUG
-    _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
     using namespace std::chrono;
  
-    // suffixtree::SuffixTreeTester::test();
-    // suffixtree::SuffixTreeTester::test_profile("D:\\test-set\\lhs.fasta", "D:\\test-set\\rhsx.fasta");
-    // pairwise_alignment::needleman_wunsh_test();
-
-    utils::Fasta fasta("D:\\data-set\\2019nCoVR_20200301.fasta");
+    utils::Fasta fasta("D:\\data-set\\gisaid_hcov-19_2020_09_01_08_tmp.fasta");
 
     std::vector<std::vector<unsigned char>> pseudos; pseudos.reserve(fasta.sequences.size());
     utils::transform_to_pseudo(fasta.sequences.cbegin(), fasta.sequences.cend(), std::back_insert_iterator(pseudos));
@@ -47,4 +44,8 @@ int main(int argc, char **argv)
 
     std::ofstream ofs("D:\\tmp.fasta");
     utils::Fasta::write_to(ofs, outputs.cbegin(), outputs.cend());
+
+    // std::vector<std::vector<unsigned>> graph{ { 0, 3, 2, 0, 0 }, { 0, 0, 0, 5, 0 }, { 0, 0, 0, 4, 8 }, { 0, 0, 0, 0, 1 }, { 0, 0, 0, 0, 0 } };
+    // auto result = dag_longest_path::longest_path_of(graph, graph.size());
+    // std::copy(result.cbegin(), result.cend(), std::ostream_iterator<size_t>(std::cout, ", "));
 }

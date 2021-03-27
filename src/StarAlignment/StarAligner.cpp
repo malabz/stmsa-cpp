@@ -2,8 +2,8 @@
 #include "../Utils/Pseudo.hpp"
 #include "../Utils/Utils.hpp"
 #include "../PairwiseAlignment/PairwiseAlignment.hpp"
+#include "../DAGLongestPath/DAGLongestPath.hpp"
 
-#include <chrono>
 #include <numeric>
 
 std::vector<std::vector<unsigned char>> star_alignment::StarAligner::align(const std::vector<sequence_type>& sequences)
@@ -52,19 +52,19 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
 
     for (size_t i = 0; i != _row; ++i)
     {
-        auto identical_substrings = st.get_identical_substrings(_sequences[i].cbegin(), _sequences[i].cend(), threshold);
+        auto identical_substrings = _optimal_path(st.get_identical_substrings(_sequences[i].cbegin(), _sequences[i].cend(), threshold));
 
-        std::vector<std::array<size_t, 4>> intervals;
+        std::vector<quadra> intervals;
         intervals.reserve(identical_substrings.size() + 1);
 
         if (identical_substrings[0][0] || identical_substrings[0][1])
-            intervals.emplace_back(std::array<size_t, 4>
+            intervals.push_back(quadra
                     ({ 0, identical_substrings[0][0], 0, identical_substrings[0][1] }));
 
         for (size_t j = 0, end_index = identical_substrings.size() - 1; j != end_index; ++j)
             if (identical_substrings[j][0] + identical_substrings[j][2] != identical_substrings[j + 1][0] ||
                 identical_substrings[j][1] + identical_substrings[j][2] != identical_substrings[j + 1][1])
-                intervals.emplace_back(std::array<size_t, 4>
+                intervals.push_back(quadra
                 ({
                     identical_substrings[j][0] + identical_substrings[j][2], identical_substrings[j + 1][0],
                     identical_substrings[j][1] + identical_substrings[j][2], identical_substrings[j + 1][1]
@@ -72,12 +72,12 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
 
         if (identical_substrings.back()[0] + identical_substrings.back()[2] != _centre_len || 
             identical_substrings.back()[1] + identical_substrings.back()[2] != _lengths[i])
-            intervals.emplace_back(std::array<size_t, 4>
+            intervals.push_back(quadra
             ({
                 identical_substrings.back()[0] + identical_substrings.back()[2], _centre_len,
                 identical_substrings.back()[1] + identical_substrings.back()[2], _lengths[i]
             }));
-
+        
         std::array<std::vector<indel>, 2> pairwise_gaps;
         for (size_t j = 0; j != intervals.size(); ++j)
         {
@@ -88,7 +88,7 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
 
             auto [lhs_gaps, rhs_gaps] = pairwise_alignment::needleman_wunsh( _centre.cbegin() + centre_begin, _centre.cbegin() + centre_end,
                     _sequences[i].cbegin() + sequence_begin, _sequences[i].cbegin() + sequence_end, pairwise_alignment::default_scoring_matrix);
-            
+
             _converse(lhs_gaps, pairwise_gaps[0], centre_begin);
             _converse(rhs_gaps, pairwise_gaps[1], sequence_begin);
         }
@@ -96,6 +96,59 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
     }
 
     return all_pairwise_gaps;
+}
+
+auto star_alignment::StarAligner::_optimal_path(const std::vector<triple>& identical_substrings)
+        -> std::vector<triple> 
+{
+    if (identical_substrings.empty()) return std::vector<triple>();
+
+    const size_t pair_num = identical_substrings.size();
+    size_t** graph = new size_t*[pair_num + 1];
+    for (size_t i = 0; i != pair_num + 1; ++i) graph[i] = new size_t[pair_num + 1]();
+
+    for (size_t i = 0; i != pair_num; ++i)
+    for (size_t j = 0; j != pair_num; ++j)
+        if (i != j && identical_substrings[i][0] + identical_substrings[i][2] < identical_substrings[j][0] + identical_substrings[j][2]
+                   && identical_substrings[i][1] + identical_substrings[i][2] < identical_substrings[j][1] + identical_substrings[j][2])
+        {
+            const int possible_overlap = std::max(
+                    static_cast<int>(identical_substrings[i][0] + identical_substrings[i][2]) - static_cast<int>(identical_substrings[j][0]), 
+                    static_cast<int>(identical_substrings[i][1] + identical_substrings[i][2]) - static_cast<int>(identical_substrings[j][1]));
+
+            graph[i + 1][j + 1] = identical_substrings[j][2];
+            if (possible_overlap > 0) graph[i + 1][j + 1] -= possible_overlap;
+        }
+
+    for (size_t i = 0; i != pair_num; ++i)
+        graph[0][i + 1] = identical_substrings[i][2];
+
+    const auto optimal_path = dag_longest_path::longest_path_of(graph, pair_num + 1);
+
+    std::vector<triple> optimal_identical_substrings;
+    optimal_identical_substrings.reserve(optimal_path.size());
+    optimal_identical_substrings.push_back(triple( { identical_substrings[optimal_path[0] - 1][0],
+                                                     identical_substrings[optimal_path[0] - 1][1],
+                                                     identical_substrings[optimal_path[0] - 1][2] }));
+
+    for (size_t i = 0; i < optimal_path.size() - 1; ++i)
+    {
+        size_t new_len = graph[optimal_path[i]][optimal_path[i + 1]];
+        size_t old_len = identical_substrings[optimal_path[i + 1] - 1][2];
+        int difference = static_cast<int>(old_len) - static_cast<int>(new_len);
+
+        size_t lhs_first = identical_substrings[optimal_path[i + 1] - 1][0];
+        size_t rhs_first = identical_substrings[optimal_path[i + 1] - 1][1];
+        if (difference > 0)
+        { lhs_first += difference; rhs_first += difference; }
+
+        optimal_identical_substrings.push_back(triple({ lhs_first, rhs_first, new_len }));
+    }
+
+    for (size_t i = 0; i != pair_num + 1; ++i) delete[] graph[i];
+    delete[] graph;
+
+    return optimal_identical_substrings;
 }
 
 void star_alignment::StarAligner::_converse(const std::vector<size_t>& src_gaps, std::vector<indel>& des_gaps, size_t start)
@@ -224,7 +277,7 @@ auto star_alignment::StarAligner::_minus(const std::vector<indel>& lhs, const st
         -> std::vector<indel>
 {
     std::vector<indel> difference;
-    difference.reserve(lhs.size()); // to do: is this necessary ?
+    difference.reserve(lhs.size());
 
     size_t lhs_index = 0;
     for (size_t rhs_index = 0; rhs_index != rhs.size(); ++lhs_index, ++rhs_index)
