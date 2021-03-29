@@ -12,17 +12,17 @@ namespace utils
     private:
         size_t _read(const std::string& filename);
 
-        std::vector<std::string> _sequences;
-        std::vector<std::string> _identifications;
-        const size_t size;
-
     public:
-        const std::vector<std::string>& sequences;
-        const std::vector<std::string>& identifications;
+        std::vector<std::string> sequences;
+        std::vector<std::string> identifications;
+        const size_t size;
 
         explicit Fasta(const std::string& infile);
 
         void write_to(std::ostream& os, bool with_idification = true) const;
+
+        static std::tuple<std::vector<std::string>, std::vector<std::vector<unsigned char>>>
+        read_to_pseudo(const std::string& infile);
 
         template<typename InputIterator>
         static void write_to(std::ostream& os, InputIterator sequence_first, InputIterator sequence_last)

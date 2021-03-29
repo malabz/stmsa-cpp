@@ -10,9 +10,9 @@ namespace utils
 
     std::string remove_white_spaces(const std::string& str);
 
-    void err_exit(const std::initializer_list<std::string>& msg);
+    void err_exit(const std::string& info = "");
 
-    inline unsigned char to_pseudo(char c);
+    unsigned char to_pseudo(char c);
 
     std::vector<unsigned char> to_pseudo(const std::string& str);
     std::string from_pseudo(const std::vector<unsigned char>& pseu);

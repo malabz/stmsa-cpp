@@ -22,30 +22,48 @@
 
 #include <fstream>
 
+void print_usage(const char* argv0);
+void print_license();
 
 int main(int argc, char **argv)
 {
 #ifdef _DEBUG
     _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
+
+    if (argc != 3) { print_usage(argv[0]); utils::err_exit(); }
+
     using namespace std::chrono;
  
-    utils::Fasta fasta("D:\\data-set\\gisaid_hcov-19_2020_09_01_08_tmp.fasta");
-
-    std::vector<std::vector<unsigned char>> pseudos; pseudos.reserve(fasta.sequences.size());
-    utils::transform_to_pseudo(fasta.sequences.cbegin(), fasta.sequences.cend(), std::back_insert_iterator(pseudos));
+    auto start_point = system_clock::now();
+    auto [identifiers, sequences] = utils::Fasta::read_to_pseudo(argv[1]);
 
     auto time_point = system_clock::now();
-    auto aligned = star_alignment::StarAligner::align(pseudos);
+    auto aligned = star_alignment::StarAligner::align(sequences);
     utils::print_duration(time_point, "aligning consumes"); std::cout << '\n';
 
-    std::vector<std::string> outputs; outputs.reserve(fasta.sequences.size());
+    std::vector<std::string> outputs; outputs.reserve(sequences.size());
     utils::transform_from_pseudo(aligned.cbegin(), aligned.cend(), std::back_insert_iterator(outputs));
 
-    std::ofstream ofs("D:\\tmp.fasta");
-    utils::Fasta::write_to(ofs, outputs.cbegin(), outputs.cend());
+    std::ofstream ofs(argv[2]);
+    if (!ofs) utils::err_exit(std::string("cannot write ") + argv[2]);
 
-    // std::vector<std::vector<unsigned>> graph{ { 0, 3, 2, 0, 0 }, { 0, 0, 0, 5, 0 }, { 0, 0, 0, 4, 8 }, { 0, 0, 0, 0, 1 }, { 0, 0, 0, 0, 0 } };
-    // auto result = dag_longest_path::longest_path_of(graph, graph.size());
-    // std::copy(result.cbegin(), result.cend(), std::ostream_iterator<size_t>(std::cout, ", "));
+    utils::Fasta::write_to(ofs, outputs.cbegin(), outputs.cend());
+    utils::print_duration(start_point, "total"); std::cout << '\n';
+
+    print_license();
+
+    return 0;
+}
+
+void print_usage(const char* argv0)
+{
+    std::cout << "usage: \n";
+    std::cout << argv0 << " unaligned.fasta output.fasta\n";
+    print_license();
+}
+
+void print_license()
+{
+    std::cout << "\nhttp://lab.malab.cn/soft/halign/\n\n";
 }

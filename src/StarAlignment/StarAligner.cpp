@@ -1,7 +1,7 @@
 #include "StarAligner.hpp"
 #include "../Utils/Pseudo.hpp"
 #include "../Utils/Utils.hpp"
-#include "../PairwiseAlignment/PairwiseAlignment.hpp"
+#include "../PairwiseAlignment/NeedlemanWunsh.hpp"
 #include "../DAGLongestPath/DAGLongestPath.hpp"
 
 #include <numeric>
@@ -86,12 +86,20 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
             const size_t sequence_begin = intervals[j][2];
             const size_t sequence_end = intervals[j][3];
 
+            unsigned flag = 0;
+            if (centre_begin == 0) flag |= pairwise_alignment::LEFT_ENDING;
+            if (centre_end == _centre_len) flag |= pairwise_alignment::RIGHT_ENDING;
+
             auto [lhs_gaps, rhs_gaps] = pairwise_alignment::needleman_wunsh( _centre.cbegin() + centre_begin, _centre.cbegin() + centre_end,
-                    _sequences[i].cbegin() + sequence_begin, _sequences[i].cbegin() + sequence_end, pairwise_alignment::default_scoring_matrix);
+                    _sequences[i].cbegin() + sequence_begin, _sequences[i].cbegin() + sequence_end, flag);
 
             _converse(lhs_gaps, pairwise_gaps[0], centre_begin);
             _converse(rhs_gaps, pairwise_gaps[1], sequence_begin);
         }
+
+        size_t sequence_gap_num = 0;
+        for (auto gap : pairwise_gaps[0]) sequence_gap_num += gap.number;
+
         all_pairwise_gaps.push_back(pairwise_gaps);
     }
 

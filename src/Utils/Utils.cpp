@@ -1,19 +1,20 @@
 #include "Utils.hpp"
 #include "Pseudo.hpp"
+#include "Fasta.hpp"
 
 #include <regex>
 #include <iostream>
 #include <limits>
 
-inline std::string utils::remove_white_spaces(const std::string& str)
+std::string utils::remove_white_spaces(const std::string& str)
 {
     static const std::regex white_spaces("\\s+");
     return std::regex_replace(str, white_spaces, "");
 }
 
-void utils::err_exit(const std::initializer_list<std::string>& msg)
+void utils::err_exit(const std::string& info)
 {
-    for (const auto& i : msg) std::cout << i; std::cout << std::endl;
+    std::cout << info << '\n';
     exit(1);
 }
 
@@ -55,7 +56,7 @@ unsigned char* _get_map()
 
 static const unsigned char* _map = _get_map();
 
-inline unsigned char utils::to_pseudo(char ch)
+unsigned char utils::to_pseudo(char ch)
 {
     return _map[ch];
 }

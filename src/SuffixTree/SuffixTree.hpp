@@ -231,7 +231,7 @@ namespace suffixtree
             _previous = next;
         }
 
-        inline Node* _new_node(size_t first, size_t len, size_t len_from_root, bool is_leef) const
+        Node* _new_node(size_t first, size_t len, size_t len_from_root, bool is_leef) const
         {
             return new Node(first, len, len_from_root, is_leef, width, this);
         }

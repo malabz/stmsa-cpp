@@ -8,7 +8,6 @@ pairwise_alignment::insert_gaps(const std::vector<unsigned char>& sequence, cons
 {
     size_t total = std::accumulate(gaps.cbegin(), gaps.cend(), static_cast<size_t>(0));
     std::vector<unsigned char> result(total + sequence.size());
-    std::cout << result.size() << ' ' << total << ' ' << sequence.size() << ' ' << gaps.size() << '\n';
 
     size_t result_index = 0;
     for (size_t i = 0; i != sequence.size(); ++i)
