@@ -3,7 +3,6 @@
 #include "../Utils/Pseudo.hpp"
 
 #include <vector>
-#include <iostream>
 
 namespace pairwise_alignment
 {

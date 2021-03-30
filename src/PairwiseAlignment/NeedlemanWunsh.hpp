@@ -58,11 +58,11 @@ namespace pairwise_alignment
                 _l_ex(_l_ending ? 0 : gap_extention),
                 _r_ex(_r_ending ? 0 : gap_extention),
 
-                _dp_matrix(d3im(NUM, d2im(_lhs_len + 1, d1im(_rhs_len + 1, 0)))),
-                _pa_matrix(d3pm(NUM, d2pm(_lhs_len + 1, d1pm(_rhs_len + 1)))),
+                _dp_matrix(NUM, d2im(_lhs_len + 1, d1im(_rhs_len + 1, 0))),
+                _pa_matrix(NUM, d2pm(_lhs_len + 1, d1pm(_rhs_len + 1))),
 
-                _lhs_gaps(gap_vector_type(_lhs_len + 1, 0)),
-                _rhs_gaps(gap_vector_type(_rhs_len + 1, 0))
+                _lhs_gaps(_lhs_len + 1, 0),
+                _rhs_gaps(_rhs_len + 1, 0)
         {}
 
         std::tuple<gap_vector_type, gap_vector_type> _align()

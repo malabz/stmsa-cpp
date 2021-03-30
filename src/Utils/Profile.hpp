@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../DAGLongestPath/DAGLongestPath.hpp"
+
 #include <iterator>
 #include <vector>
 
@@ -113,36 +115,24 @@ std::vector<std::array<size_t, 3>> utils::get_similar_substrings(const SuffixTre
 {
         std::vector<std::array<size_t, 3>> similar_substrings;
         const size_t rhs_len = rhs_last - rhs_first;
-        size_t lhs_index = 0, rhs_index = 0, rhs_last_end = 0;
-        while (rhs_index < rhs_len)
+
+        for (size_t rhs_index = 0; rhs_index < rhs_len; )
         {
-            auto curr_result = _search_for_prefix(suffix_tree, lhs_first, rhs_first + rhs_index, rhs_last, tolerance, threshold);
-            if (curr_result.size() == 0)
+            auto found = _search_for_prefix(suffix_tree, lhs_first, rhs_first + rhs_index, rhs_last, tolerance, threshold);
+
+            if (found.size() == 0)
             {
                 ++rhs_index;
             }
             else
             {
-                size_t min_dis = std::numeric_limits<size_t>::max();
-                for (size_t i = 1; i != curr_result.size(); ++i)
-                    if (curr_result[i] > lhs_index && curr_result[i] - lhs_index < min_dis)
-                        min_dis = curr_result[i] - lhs_index;
+                for (size_t i = 1; i != found.size(); ++i)
+                    similar_substrings.push_back(std::array<size_t, 3>({ found[i], rhs_index, found[0] }));
 
-                if (min_dis == std::numeric_limits<size_t>::max())
-                {
-                    ++rhs_index;
-                }
-                else
-                {
-                    lhs_index += min_dis;
-                    similar_substrings.push_back({ lhs_index, rhs_index, curr_result[0] });
-
-                    lhs_index += curr_result[0];
-                    rhs_index += curr_result[0];
-                    rhs_last_end = rhs_index;
-                }
+                rhs_index += found[0] - threshold + 1;
             }
         }
+
         return similar_substrings;
 }
 

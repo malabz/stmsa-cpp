@@ -1,16 +1,11 @@
 #pragma once
 
-#ifdef _DEBUG
-    #include <iostream>
-#endif
-
 #include <vector>
 #include <iterator>
 #include <algorithm>
 #include <cstring>
 #include <array>
 #include <limits>
-// #include <unordered_set>
 
 namespace suffixtree
 {
@@ -128,10 +123,10 @@ namespace suffixtree
         std::vector<std::array<size_t, 3>> get_identical_substrings(RandomAccessIterator first, RandomAccessIterator last, size_t threshold) const
         {
             std::vector<std::array<size_t, 3>> identical_substrings;
-            const size_t len = last - first;
+            const size_t rhs_len = last - first;
 
             // auto set_array = new std::unordered_set<size_t>*[length]();
-            for (size_t rhs_index = 0; rhs_index < len; )
+            for (size_t rhs_index = 0; rhs_index < rhs_len; )
             {
                 auto found = search_for_prefix(first + rhs_index, last, threshold);
 
@@ -143,9 +138,6 @@ namespace suffixtree
                 {
                     // const size_t rhs_bgn = rhs_index;
                     // const size_t rhs_end = rhs_index + found[0];
-
-                    for (size_t i = 1; i != found.size(); ++i)
-                        identical_substrings.push_back(std::array<size_t, 3>({ found[i], rhs_index, found[0] }));
 
                     // {
                     //     const size_t lhs_bgn = found[i];
@@ -160,6 +152,9 @@ namespace suffixtree
                     //         set_array[lhs_end]->insert(rhs_end);
                     //     }
                     // }
+
+                    for (size_t i = 1; i != found.size(); ++i)
+                        identical_substrings.push_back(std::array<size_t, 3>({ found[i], rhs_index, found[0] }));
 
                     rhs_index += found[0] - threshold + 1;
                 }

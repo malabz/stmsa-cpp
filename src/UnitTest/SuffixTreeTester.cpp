@@ -1,4 +1,5 @@
 #include "SuffixTreeTester.hpp"
+#include "../StarAlignment/StarAligner.hpp"
 #include "../Utils/Fasta.hpp"
 #include "../Utils/Profile.hpp"
 #include "../Utils/Utils.hpp"
@@ -59,7 +60,7 @@ void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const
     std::vector<std::vector<unsigned char>> lhs_sequences(lhs.sequences.size()), rhs_sequences(rhs.sequences.size());
     utils::transform_to_pseudo(lhs.sequences.cbegin(), lhs.sequences.cend(), lhs_sequences.begin());
     utils::transform_to_pseudo(rhs.sequences.cbegin(), rhs.sequences.cend(), rhs_sequences.begin());
-    utils::print_duration(time_point, "reading and mapping");
+    utils::print_duration(time_point, "reading and mapping"); std::cout << '\n';
     // std::copy(lhs_sequences[0].cbegin(), lhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << '\n';
     // std::copy(rhs_sequences[0].cbegin(), rhs_sequences[0].cend(), std::ostream_iterator<int>(std::cout)); std::cout << '\n';
 
@@ -75,7 +76,7 @@ void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const
     rhs_profiles.reserve(rhs_sequences[0].size());
     for (size_t i = 0; i != lhs_sequences[0].size(); ++i) lhs_profiles.emplace_back(lhs_sequences.cbegin(), lhs_sequences.cend(), i);
     for (size_t i = 0; i != rhs_sequences[0].size(); ++i) rhs_profiles.emplace_back(rhs_sequences.cbegin(), rhs_sequences.cend(), i);
-    utils::print_duration(time_point, "profiles");
+    utils::print_duration(time_point, "profiles"); std::cout << '\n';
     // std::copy(lhs_profiles.cbegin(), lhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << '\n';
     // std::copy(rhs_profiles.cbegin(), rhs_profiles.cend(), std::ostream_iterator<unsigned>(std::cout)); std::cout << '\n';
 
@@ -85,13 +86,14 @@ void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const
     // std::copy((*lhs_sequences.cbegin()).cbegin(), (*lhs_sequences.cbegin()).cend(), std::ostream_iterator<int>(std::cout)); std::cout << '\n';
     time_point = system_clock::now();
     suffixtree::SuffixTree<unsigned char> st(artificial_sequence.cbegin(), artificial_sequence.cend(), nucleic_acid_pseudo::MAX_ELE);
-    utils::print_duration(time_point, "suffix tree");
+    utils::print_duration(time_point, "suffix tree"); std::cout << '\n';
 
     // search
     lhs_profiles.emplace_back();
     time_point = system_clock::now();
-    auto result = utils::get_similar_substrings(st, lhs_profiles.cbegin(), rhs_profiles.cbegin(), rhs_profiles.cend(), 2., 31);
-    utils::print_duration(time_point, "search");
+    auto result = star_alignment::StarAligner::_optimal_path
+            (utils::get_similar_substrings(st, lhs_profiles.cbegin(), rhs_profiles.cbegin(), rhs_profiles.cend(), 2., 31));
+    utils::print_duration(time_point, "search"); std::cout << '\n';
     std::cout << result.size() << " similar substring(s) found" << '\n';
     // if (result.size()) suffixtree::SuffixTreeTester::print_matrix(result, result.size(), result[0].size());
 
@@ -115,11 +117,11 @@ void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const
         std::cout << "average = " << (std::accumulate(differences.cbegin(), differences.cend(), .0) / differences.size()) << '\n';
         std::cout << "    max = " << difference_max << '\n';
 
-        size_t statistics[100];
-        memset(statistics, 0, sizeof(statistics));
-        for (size_t i = 0; i != differences.size(); ++i)
-            ++statistics[static_cast<unsigned>(std::floor(differences[i] * 100))];
-        std::copy(statistics, statistics + 100, std::ostream_iterator<size_t>(std::cout, " ")); std::cout << '\n';
+        // size_t statistics[100];
+        // memset(statistics, 0, sizeof(statistics));
+        // for (size_t i = 0; i != differences.size(); ++i)
+        //     ++statistics[static_cast<unsigned>(std::floor(differences[i] * 100))];
+        // std::copy(statistics, statistics + 100, std::ostream_iterator<size_t>(std::cout, " ")); std::cout << '\n';
     }
 }
 
