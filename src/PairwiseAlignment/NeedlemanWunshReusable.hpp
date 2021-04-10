@@ -10,70 +10,101 @@ namespace pairwise_alignment
 
     template <typename RandomAccessIterator1, typename RandomAccessIterator2,
               typename ScoringMatrixType>
-    class NeedlemanWunsh
+    class NeedlemanWunshReusable
     {
-        template <typename RandomAccessIterator1, typename RandomAccessIterator2,
-                  typename ScoringMatrixType>
-        friend
-        std::tuple<std::vector<size_t>, std::vector<size_t>>
-        needleman_wunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
-                        RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
-                        unsigned flag, const ScoringMatrixType& scoring_matrix,
-                        int gap_open, int gap_extention);
-
+    public:
         using gap_vector_type = std::vector<size_t>;
 
-        // n-dimension int matrix
-        using d1im = std::vector<int>;
-        using d2im = std::vector<d1im>;
-        using d3im = std::vector<d2im>;
-
-        // n-dimension path matrix
-        using d1pm = std::vector<unsigned char>;
-        using d2pm = std::vector<d1pm>;
-        using d3pm = std::vector<d2pm>;
-
-        NeedlemanWunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
-                       RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
-                       unsigned flag, const ScoringMatrixType& scoring_matrix,
-                       int gap_open, int gap_extention):
-
-                _lhs_first(lhs_first), _lhs_last(lhs_last),
-                _rhs_first(rhs_first), _rhs_last(rhs_last),
-
-                _lhs_len(std::distance(lhs_first, lhs_last)),
-                _rhs_len(std::distance(rhs_first, rhs_last)),
-
+        NeedlemanWunshReusable(const ScoringMatrixType& scoring_matrix, int gap_open, int gap_extention):
                 _scoring_matrix(scoring_matrix),
-                _l_ending(flag & LEFT_ENDING),
-                _r_ending(flag & RIGHT_ENDING),
-
-                _op(gap_open),
-                _l_op(_l_ending ? 0 : gap_open),
-                _r_op(_r_ending ? 0 : gap_open),
-
-                _ex(gap_extention),
-                _l_ex(_l_ending ? 0 : gap_extention),
-                _r_ex(_r_ending ? 0 : gap_extention),
-
-                _dp_matrix(NUM, d2im(_lhs_len + 1, d1im(_rhs_len + 1, 0))),
-                _pa_matrix(NUM, d2pm(_lhs_len + 1, d1pm(_rhs_len + 1))),
-
-                _lhs_gaps(_lhs_len + 1, 0),
-                _rhs_gaps(_rhs_len + 1, 0)
+                _op(gap_open), _ex(gap_extention),
+                _lhs_capacity(0), _rhs_capacity(0)
         {}
 
-        std::tuple<gap_vector_type, gap_vector_type> _align()
+        ~NeedlemanWunshReusable()
         {
-            _inisialise();
+            _clear();
+        }
+
+        std::tuple<gap_vector_type, gap_vector_type>
+        operator ()(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
+              RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last, unsigned flag)
+        {
+            _inisialise(lhs_first, lhs_last, rhs_first, rhs_last, flag);
             _do_dp();
             _trace_back();
             return std::make_tuple(std::move(_lhs_gaps), std::move(_rhs_gaps));
         }
 
-        void _inisialise()
+    private:
+        void _clear()
         {
-            // _dp_matrix
+            if (_lhs_capacity)
+            {
+                for (size_t i = 0; i != NUM; ++i)
+                {
+                    for (size_t j = 0; j != _lhs_capacity; ++j)
+                    {
+                        delete[] _dp_matrix[i][j];
+                        delete[] _pa_matrix[i][j];
+                    }
+
+                    delete[] _dp_matrix[i];
+                    delete[] _pa_matrix[i];
+                }
+
+                delete[] _dp_matrix;
+                delete[] _pa_matrix;
+            }
+        }
+
+        void _inisialise(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
+                         RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last, unsigned flag)
+        {
+            _lhs_first = lhs_first; _lhs_last  = lhs_last; _lhs_len = std::distance(lhs_first, lhs_last);
+            _rhs_first = rhs_first; _rhs_last  = rhs_last; _rhs_len = std::distance(rhs_first, rhs_last);
+
+            bool _l_ending = flag & LEFT_ENDING;
+            bool _r_ending = flag & RIGHT_ENDING;
+
+            _l_op = _l_ending ? 0 : _op;
+            _r_op = _r_ending ? 0 : _op;
+
+            _l_ex = _l_ending ? 0 : _ex;
+            _r_ex = _r_ending ? 0 : _ex;
+
+            if (_lhs_capacity > _lhs_len && _rhs_capacity > _rhs_len)
+            {
+                for (size_t i = 0; i != NUM; ++i)
+                    for (size_t j = 0; j <= _lhs_len; ++j)
+                        memset(_dp_matrix[i][j], 0, _rhs_len + 1);
+            }
+            else
+            {
+                _clear();
+                _lhs_gaps.clear();
+                _rhs_gaps.clear();
+
+                _dp_matrix = new int**[NUM];
+                _pa_matrix = new unsigned char**[NUM];
+                for (size_t i = 0; i != NUM; ++i)
+                {
+                    _dp_matrix[i] = new int*[_lhs_len + 1];
+                    _pa_matrix[i] = new unsigned char*[_lhs_len + 1];
+
+                    for (size_t j = 0; j <= _lhs_len; ++j)
+                    {
+                        _dp_matrix[i][j] = new int[_rhs_len + 1]();
+                        _pa_matrix[i][j] = new unsigned char[_rhs_len + 1];
+                    }
+                }
+
+                _lhs_capacity = _lhs_len + 1;
+                _rhs_capacity = _rhs_len + 1;
+            }
+
+            _lhs_gaps.resize(_lhs_len + 1); std::fill(_lhs_gaps.begin(), _lhs_gaps.end(), 0);
+            _rhs_gaps.resize(_rhs_len + 1); std::fill(_rhs_gaps.begin(), _rhs_gaps.end(), 0);
 
             for (size_t i = 0; i <= _lhs_len; ++i)
             {
@@ -96,8 +127,6 @@ namespace pairwise_alignment
             _dp_matrix[VER][0][0] = 0;
             _dp_matrix[HOR][0][0] = 0;
             _dp_matrix[DIA][0][0] = 0;
-
-            // _pa_matrix
 
             for (size_t i = 0; i <= _lhs_len; ++i) { _pa_matrix[VER][i][0] = VER; _pa_matrix[DIA][i][0] = VER; }
             for (size_t j = 0; j <= _rhs_len; ++j) { _pa_matrix[HOR][0][j] = HOR; _pa_matrix[DIA][0][j] = HOR; }
@@ -187,37 +216,25 @@ namespace pairwise_alignment
 
         // scoring
         const ScoringMatrixType& _scoring_matrix;
-        const bool               _l_ending, _r_ending;
-        const int                _op, _l_op, _r_op;
-        const int                _ex, _l_ex, _r_ex;
+
+        int _op, _l_op, _r_op;
+        int _ex, _l_ex, _r_ex;
 
         // sequences
-        const RandomAccessIterator1 _lhs_first, _lhs_last;
-        const RandomAccessIterator2 _rhs_first, _rhs_last;
-        const size_t                _lhs_len,   _rhs_len;
+        RandomAccessIterator1 _lhs_first, _lhs_last;
+        RandomAccessIterator2 _rhs_first, _rhs_last;
+
+        size_t                _lhs_len, _lhs_capacity;
+        size_t                _rhs_len, _rhs_capacity;
 
         // dynamic programing
-        d3im _dp_matrix;
-        d3pm _pa_matrix; // path
+        int           ***_dp_matrix;
+        unsigned char ***_pa_matrix; // path
 
         // result
         gap_vector_type _lhs_gaps;
         gap_vector_type _rhs_gaps;
 
     };
-
-    template <typename RandomAccessIterator1, typename RandomAccessIterator2,
-              typename ScoringMatrixType = decltype(default_scoring_matrix)>
-    std::tuple<std::vector<size_t>, std::vector<size_t>>
-    needleman_wunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
-                    RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
-                    unsigned flag = DEFAULT,
-                    const ScoringMatrixType& scoring_matrix = default_scoring_matrix,
-                    int gap_open = default_gap_open,
-                    int gap_extention = default_gap_extention)
-    {
-        return NeedlemanWunsh<RandomAccessIterator1, RandomAccessIterator2, ScoringMatrixType>
-                (lhs_first, lhs_last, rhs_first, rhs_last, flag, scoring_matrix, gap_open, gap_extention)._align();
-    }
 
 }

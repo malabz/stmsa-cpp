@@ -8,10 +8,9 @@
 #include <random>
 #include <cassert>
 #include <numeric>
-#include <iomanip>
 #include <cmath>
 
-void suffixtree::SuffixTreeTester::test()
+void suffixtree::test()
 {
     std::random_device rd;
     std::mt19937 generator(rd());
@@ -50,7 +49,7 @@ void suffixtree::SuffixTreeTester::test()
     }
 }
 
-void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const char* rhs_file_path)
+void suffixtree::test_profile(const char* lhs_file_path, const char* rhs_file_path)
 {
     using namespace std::chrono;
 
@@ -122,16 +121,5 @@ void suffixtree::SuffixTreeTester::test_profile(const char* lhs_file_path, const
         // for (size_t i = 0; i != differences.size(); ++i)
         //     ++statistics[static_cast<unsigned>(std::floor(differences[i] * 100))];
         // std::copy(statistics, statistics + 100, std::ostream_iterator<size_t>(std::cout, " ")); std::cout << '\n';
-    }
-}
-
-template<typename MatrixType>
-void suffixtree::SuffixTreeTester::print_matrix(const MatrixType& matrix, size_t row, size_t clm)
-{
-    for (size_t i = 0; i != row; ++i)
-    {
-        for (size_t j = 0; j != clm; ++j)
-            std::cout << std::right << std::setw(8) << matrix[i][j] << ' ';
-        std::cout << '\n';
     }
 }

@@ -13,12 +13,13 @@
 
 #endif
 
-#include "UnitTest/PairwiseAlignmentTester.hpp"
-#include "UnitTest/SuffixTreeTester.hpp"
+// #include "UnitTest/PairwiseAlignmentTester.hpp"
+// #include "UnitTest/SuffixTreeTester.hpp"
+// #include "UnitTest/GraphTester.hpp"
+
 #include "StarAlignment/StarAligner.hpp"
 #include "Utils/Fasta.hpp"
 #include "Utils/Utils.hpp"
-#include "DAGLongestPath/DAGLongestPath.hpp"
 
 #include <fstream>
 

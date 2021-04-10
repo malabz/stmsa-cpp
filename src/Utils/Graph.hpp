@@ -1,8 +1,55 @@
 #include <vector>
 
-namespace dag_longest_path
+namespace utils
 {
 
+    class AdjacencyList
+    {
+    public:
+        class edge_type
+        {
+        public:
+            size_t to;
+            unsigned weight;
+
+            edge_type(size_t to, unsigned weight):
+                to(to),
+                weight(weight)
+            {}
+        };
+
+        class reverse_edge_type
+        {
+        public:
+            size_t from;
+            unsigned weight;
+
+            reverse_edge_type(size_t from, unsigned weight):
+                from(from),
+                weight(weight)
+            {}
+        };
+
+        using node_type = std::vector<edge_type>;
+        using reverse_node_type = std::vector<reverse_edge_type>;
+
+        std::vector<node_type> nodes;
+
+        explicit AdjacencyList(size_t nodes_number = 0);
+
+        void add_edge(size_t from, size_t to, unsigned weight);
+        unsigned get_weight(size_t from, size_t to) const noexcept;
+
+        std::vector<size_t> get_longest_path() const;
+        std::vector<size_t> topological_sort() const;
+
+    private:
+
+        size_t _edge_num;
+        size_t _node_num;
+    };
+
+    // assume that nodes with higher index cannot have an edge linking to a node with lower index
     template <typename MatrixType>
     std::vector<size_t> longest_path_of(const MatrixType& graph, size_t node_num)
     {
@@ -35,11 +82,11 @@ namespace dag_longest_path
         // std::copy(distance, distance + node_num, std::ostream_iterator<size_t>(std::cout, ", ")); std::cout << '\n';
         // std::copy(path_record, path_record + node_num, std::ostream_iterator<size_t>(std::cout, ", ")); std::cout << '\n';
         // std::copy(path.cbegin(), path.cend(), std::ostream_iterator<size_t>(std::cout, ", ")); std::cout << '\n';
-            
+
         delete[] distance;
         delete[] path_record;
 
         return path;
     }
-    
+
 }

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../DAGLongestPath/DAGLongestPath.hpp"
-
 #include <iterator>
 #include <vector>
 

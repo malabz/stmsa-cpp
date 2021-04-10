@@ -1,10 +1,8 @@
 #include "StarAligner.hpp"
 #include "../Utils/Pseudo.hpp"
 #include "../Utils/Utils.hpp"
-#include "../PairwiseAlignment/NeedlemanWunsh.hpp"
-#include "../DAGLongestPath/DAGLongestPath.hpp"
-
-#include <numeric>
+#include "../Utils/Graph.hpp"
+#include "../PairwiseAlignment/NeedlemanWunshReusable.hpp"
 
 std::vector<std::vector<unsigned char>> star_alignment::StarAligner::align(const std::vector<sequence_type>& sequences)
 {
@@ -50,6 +48,10 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
     suffixtree::SuffixTree<unsigned char> st(_centre.cbegin(), _centre.cend(), nucleic_acid_pseudo::MAX_ELE);
     std::vector<std::array<std::vector<indel>, 2>> all_pairwise_gaps;
 
+    using iter = std::vector<unsigned char>::const_iterator;
+    pairwise_alignment::NeedlemanWunshReusable<iter, iter, decltype(pairwise_alignment::default_scoring_matrix)>
+    nw(pairwise_alignment::default_scoring_matrix, pairwise_alignment::default_gap_open, pairwise_alignment::default_gap_extention);
+
     for (size_t i = 0; i != _row; ++i)
     {
         auto identical_substrings = _optimal_path(st.get_identical_substrings(_sequences[i].cbegin(), _sequences[i].cend(), threshold));
@@ -90,7 +92,7 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
             if (centre_begin == 0) flag |= pairwise_alignment::LEFT_ENDING;
             if (centre_end == _centre_len) flag |= pairwise_alignment::RIGHT_ENDING;
 
-            auto [lhs_gaps, rhs_gaps] = pairwise_alignment::needleman_wunsh( _centre.cbegin() + centre_begin, _centre.cbegin() + centre_end,
+            auto [lhs_gaps, rhs_gaps] = nw(_centre.cbegin() + centre_begin, _centre.cbegin() + centre_end,
                     _sequences[i].cbegin() + sequence_begin, _sequences[i].cbegin() + sequence_end, flag);
 
             _converse(lhs_gaps, pairwise_gaps[0], centre_begin);
@@ -109,11 +111,11 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
 auto star_alignment::StarAligner::_optimal_path(const std::vector<triple>& identical_substrings)
         -> std::vector<triple> 
 {
-    if (identical_substrings.empty()) return std::vector<triple>();
+    std::vector<triple> optimal_identical_substrings;
+    if (identical_substrings.empty()) return optimal_identical_substrings;
 
     const size_t pair_num = identical_substrings.size();
-    size_t** graph = new size_t*[pair_num + 1];
-    for (size_t i = 0; i != pair_num + 1; ++i) graph[i] = new size_t[pair_num + 1]();
+    utils::AdjacencyList graph(pair_num + 1);
 
     for (size_t i = 0; i != pair_num; ++i)
     for (size_t j = 0; j != pair_num; ++j)
@@ -124,16 +126,16 @@ auto star_alignment::StarAligner::_optimal_path(const std::vector<triple>& ident
                     static_cast<int>(identical_substrings[i][0] + identical_substrings[i][2]) - static_cast<int>(identical_substrings[j][0]), 
                     static_cast<int>(identical_substrings[i][1] + identical_substrings[i][2]) - static_cast<int>(identical_substrings[j][1]));
 
-            graph[i + 1][j + 1] = identical_substrings[j][2];
-            if (possible_overlap > 0) graph[i + 1][j + 1] -= possible_overlap;
+            unsigned weight = identical_substrings[j][2];
+            if (possible_overlap > 0) weight -= possible_overlap;
+            graph.add_edge(i + 1, j + 1, weight);
         }
 
     for (size_t i = 0; i != pair_num; ++i)
-        graph[0][i + 1] = identical_substrings[i][2];
+        graph.add_edge(0, i + 1, identical_substrings[i][2]);
 
-    const auto optimal_path = dag_longest_path::longest_path_of(graph, pair_num + 1);
+    const auto optimal_path = graph.get_longest_path();
 
-    std::vector<triple> optimal_identical_substrings;
     optimal_identical_substrings.reserve(optimal_path.size());
     optimal_identical_substrings.push_back(triple( { identical_substrings[optimal_path[0] - 1][0],
                                                      identical_substrings[optimal_path[0] - 1][1],
@@ -141,7 +143,7 @@ auto star_alignment::StarAligner::_optimal_path(const std::vector<triple>& ident
 
     for (size_t i = 0; i < optimal_path.size() - 1; ++i)
     {
-        size_t new_len = graph[optimal_path[i]][optimal_path[i + 1]];
+        size_t new_len = graph.get_weight(optimal_path[i], optimal_path[i + 1]);
         size_t old_len = identical_substrings[optimal_path[i + 1] - 1][2];
         int difference = static_cast<int>(old_len) - static_cast<int>(new_len);
 
@@ -152,9 +154,6 @@ auto star_alignment::StarAligner::_optimal_path(const std::vector<triple>& ident
 
         optimal_identical_substrings.push_back(triple({ lhs_first, rhs_first, new_len }));
     }
-
-    for (size_t i = 0; i != pair_num + 1; ++i) delete[] graph[i];
-    delete[] graph;
 
     return optimal_identical_substrings;
 }
