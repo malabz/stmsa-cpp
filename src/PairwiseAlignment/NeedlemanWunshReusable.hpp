@@ -224,8 +224,8 @@ namespace pairwise_alignment
         RandomAccessIterator1 _lhs_first, _lhs_last;
         RandomAccessIterator2 _rhs_first, _rhs_last;
 
-        size_t                _lhs_len, _lhs_capacity;
-        size_t                _rhs_len, _rhs_capacity;
+        size_t _lhs_len, _lhs_capacity;
+        size_t _rhs_len, _rhs_capacity;
 
         // dynamic programing
         int           ***_dp_matrix;

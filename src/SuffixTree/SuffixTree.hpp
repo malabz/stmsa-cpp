@@ -10,28 +10,19 @@
 namespace suffixtree
 {
 
-    template<typename T>
+    template<size_t width>
     class SuffixTree
     {
     public:
-        using value_type = T;
-
         class Node;
         friend class Node;
 
-        const size_t width;
-        Node* const root;
-
-        const size_t length;
-        const value_type* const word;
-
         template<typename InputIterator>
-        SuffixTree(InputIterator first, InputIterator last, value_type max_element) :
-            width(static_cast<size_t>(max_element) + 2), // max_element + 1 is the end mark '$'
+        SuffixTree(InputIterator first, InputIterator last, unsigned char end_mark) :
             root(_new_node(-1, 0, 0, false)),
 
             length(std::distance(first, last) + 1),
-            word(_copy_word(first, last)),
+            word(_copy_word(first, last, end_mark)),
 
             _active_node(root),
             _active_edge(nullptr),
@@ -96,8 +87,7 @@ namespace suffixtree
 
         ~SuffixTree()
         {
-            delete []word;
-            _delete_tree(root);
+            delete[] word;
         }
 
         template<typename InputIterator>
@@ -109,7 +99,7 @@ namespace suffixtree
                 if (curr_node == nullptr)
                     return common_prefix_length < threshold ? std::vector<size_t>() : get_all_beginning_with(last_node, common_prefix_length);
 
-                for (const value_type* lhs_begin = word + curr_node->first, * lhs_end = lhs_begin + curr_node->length;
+                for (const unsigned char* lhs_begin = word + curr_node->first, * lhs_end = lhs_begin + curr_node->length;
                     lhs_begin != lhs_end && first != last; ++lhs_begin, ++first, ++common_prefix_length)
                     if (*lhs_begin != *first)
                         return common_prefix_length < threshold ? std::vector<size_t>() : get_all_beginning_with(curr_node, common_prefix_length);
@@ -165,9 +155,9 @@ namespace suffixtree
             return identical_substrings;
         }
 
-        std::vector<std::vector<value_type>> get_all_suffixes() const
+        std::vector<std::vector<unsigned char>> get_all_suffixes() const
         {
-            std::vector<std::vector<value_type>> suffixes;
+            std::vector<std::vector<unsigned char>> suffixes;
             suffixes.reserve(length);
             std::vector<Node*> stack;
             _get_all_suffixes(root, stack, suffixes);
@@ -193,10 +183,10 @@ namespace suffixtree
 
     private:
         template<typename InputIterator>
-        value_type* _copy_word(InputIterator first, InputIterator last) const
+        unsigned char* _copy_word(InputIterator first, InputIterator last, unsigned char end_mark) const
         {
-            value_type* result = new value_type[length];
-            *std::copy(first, last, result) = width - 1;
+            unsigned char* result = new unsigned char[length];
+            *std::copy(first, last, result) = end_mark;
             return result;
         }
 
@@ -226,16 +216,16 @@ namespace suffixtree
             _previous = next;
         }
 
-        Node* _new_node(size_t first, size_t len, size_t len_from_root, bool is_leef) const
+        Node* _new_node(size_t first, size_t len, size_t len_from_root, bool is_leef)
         {
-            return new Node(first, len, len_from_root, is_leef, width, this);
+            return new (_allocator.allocate_node()) Node(first, len, len_from_root, is_leef, this);
         }
 
-        void _get_all_suffixes(const Node* root, std::vector<Node *>& stack, std::vector<std::vector<value_type>>& suffixes) const
+        void _get_all_suffixes(const Node* root, std::vector<Node *>& stack, std::vector<std::vector<unsigned char>>& suffixes) const
         {
             if (root->children == nullptr)
             {
-                std::vector<value_type> curr;
+                std::vector<unsigned char> curr;
                 size_t len = 0;
                 for (auto np : stack) len += np->length;
                 curr.reserve(len);
@@ -265,55 +255,53 @@ namespace suffixtree
             delete tree;
         }
 
-        // 活动点
-        Node* _active_node;                     // 活动结点
-        const value_type* _active_edge;         // 用字符代表的活动边
-        size_t _active_length;                  // 活动长度, 只有在活动边非null时有效
-        value_type _active_edge_aux;
+    private:
+        class Allocator;
+        Allocator _allocator;
 
-        // 每趟循环临时变量
-        size_t _curr_end;                       // 待显式插入后缀的区间, 注意这里所代表的区间形式为(begin_index, end_index)
-        size_t _remainder;                      // 待插入后缀数量
-        Node*  _previous;                       // 最后创建的节点, 后缀链接时使用
-        value_type      _current;               // 当前待插入后缀的最后一个元素
-    };
-
-    template<typename value_type>
-    class SuffixTree<value_type>::Node
-    {
     public:
-        using tree_type = SuffixTree<value_type>;
-        friend class tree_type;
+        Node* const root;
 
-        const tree_type* const tree;
-        const size_t width;
-        Node** children;
-
-        size_t first;
-        size_t length;
-        size_t length_from_root;
-
-        ~Node()
-        {
-            if (children) delete children;
-        }
+        const size_t length;
+        const unsigned char* const word;
 
     private:
-        Node(size_t first, size_t len, size_t len_from_root, bool is_leef, size_t width, const tree_type* tree) :
-            tree(tree),
-            width(width),
+        // 活动点
+        Node*                   _active_node;       // 活动结点
+        const unsigned char*    _active_edge;       // 用字符代表的活动边
+        size_t                  _active_length;     // 活动长度, 只有在活动边非null时有效
+        unsigned char           _active_edge_aux;
 
+        // 每趟循环临时变量
+        size_t                  _curr_end;          // 待显式插入后缀的区间, 注意这里所代表的区间形式为(begin_index, end_index)
+        size_t                  _remainder;         // 待插入后缀数量
+        Node*                   _previous;          // 最后创建的节点, 后缀链接时使用
+        unsigned char           _current;           // 当前待插入后缀的最后一个元素
+    };
+
+    template <size_t width>
+    class SuffixTree<width>::Node
+    {
+    public:
+        friend class SuffixTree<width>;
+
+        Node(size_t first, size_t len, size_t len_from_root, bool is_leef, SuffixTree<width>* tree) :
             first(first), length(len),
             length_from_root(len_from_root),
 
-            children(is_leef ? nullptr : new Node * [width]()), _suffix(nullptr)
+            children(is_leef ? nullptr : tree->_allocator.allocate_array()),
+            tree(tree),
+
+            _suffix(nullptr)
         {}
 
+    private:
         void _split()
         {
             Node* next = children[*tree->_active_edge];
 
-            auto new_node = new Node(next->first, tree->_active_length, length_from_root + tree->_active_length, false, width, tree);
+            auto new_node = new (tree->_allocator.allocate_node())
+                Node(next->first, tree->_active_length, length_from_root + tree->_active_length, false, tree);
             new_node->children[tree->word[next->first + tree->_active_length]] = next;
 
             next->first += tree->_active_length;
@@ -322,7 +310,78 @@ namespace suffixtree
             children[*tree->_active_edge] = new_node;
         }
 
+    public:
+        size_t first;
+        size_t length;
+        size_t length_from_root;
+
+        Node** const children;
+        SuffixTree<width>* const tree;
+
+    private:
         Node* _suffix;
+    };
+
+    template<size_t width>
+    class SuffixTree<width>::Allocator
+    {
+    public:
+        Allocator() :
+            _node_block_size(_initial_block_size),
+            _arr_block_size(_initial_block_size),
+
+            _node_index(_node_block_size),
+            _arr_index(_arr_block_size)
+        {}
+
+        Node* allocate_node()
+        {
+            if (_node_index == _node_block_size)
+                _allocate_node_block();
+
+            return reinterpret_cast<Node*>(_node_blocks.back() + sizeof(Node) * _node_index++);
+        }
+
+        // allocate and set 0
+        Node** allocate_array()
+        {
+            if (_arr_index == _arr_block_size)
+                _allocate_arr_block();
+
+            auto mem = _arr_blocks.back() + sizeof(Node*) * width * _arr_index++;
+            memset(mem, 0, sizeof(Node*) * width);
+
+            return reinterpret_cast<Node**>(mem);
+        }
+
+        ~Allocator()
+        {
+            for (auto i : _node_blocks) delete[] i;
+            for (auto i : _arr_blocks)  delete[] i;
+        }
+
+    private:
+        void _allocate_node_block()
+        {
+            _node_index = 0;
+            _node_block_size <<= 1;
+            _node_blocks.push_back(new char[sizeof(Node) * _node_block_size]);
+        }
+
+        void _allocate_arr_block()
+        {
+            _arr_index = 0;
+            _arr_block_size += _arr_blocks.size();
+            _arr_blocks.push_back(new char[sizeof(Node*) * width * _arr_block_size]);
+        }
+
+        static constexpr size_t _initial_block_size = 16;
+
+        std::vector<char*> _node_blocks;
+        std::vector<char*> _arr_blocks;
+
+        size_t _node_block_size, _arr_block_size;
+        size_t _node_index, _arr_index;
     };
 
 }

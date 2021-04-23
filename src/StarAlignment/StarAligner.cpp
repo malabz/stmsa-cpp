@@ -43,9 +43,9 @@ std::vector<std::vector<unsigned char>> star_alignment::StarAligner::_align() co
 
 auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::array<std::vector<indel>, 2>>
 {
-    constexpr size_t threshold = 15;
+    static constexpr size_t threshold = 15;
 
-    suffixtree::SuffixTree<unsigned char> st(_centre.cbegin(), _centre.cend(), nucleic_acid_pseudo::MAX_ELE);
+    suffixtree::SuffixTree<nucleic_acid_pseudo::NUMBER> st(_centre.cbegin(), _centre.cend(), nucleic_acid_pseudo::GAP);
     std::vector<std::array<std::vector<indel>, 2>> all_pairwise_gaps;
 
     using iter = std::vector<unsigned char>::const_iterator;
