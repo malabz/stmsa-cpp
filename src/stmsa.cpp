@@ -8,14 +8,11 @@
 #include <crtdbg.h>
 
 // the following two lines will make operator new tell crt where the leaked memory is allocated
-#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define new DEBUG_NEW
+// note that reloaded operator new cannot compile if the macros below are defined
+// #define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+// #define new DEBUG_NEW
 
 #endif
-
-// #include "UnitTest/PairwiseAlignmentTester.hpp"
-// #include "UnitTest/SuffixTreeTester.hpp"
-// #include "UnitTest/GraphTester.hpp"
 
 #include "StarAlignment/StarAligner.hpp"
 #include "Utils/Fasta.hpp"
@@ -34,12 +31,10 @@ int main(int argc, char **argv)
 
     if (argc != 3) { print_usage(argv[0]); utils::err_exit(); }
 
-    using namespace std::chrono;
- 
-    auto start_point = system_clock::now();
+    auto start_point = std::chrono::system_clock::now();
     auto [identifiers, sequences] = utils::Fasta::read_to_pseudo(argv[1]);
 
-    auto time_point = system_clock::now();
+    auto time_point = std::chrono::system_clock::now();
     auto aligned = star_alignment::StarAligner::align(sequences);
     utils::print_duration(time_point, "aligning consumes"); std::cout << '\n';
 
@@ -66,5 +61,5 @@ void print_usage(const char* argv0)
 
 void print_license()
 {
-    std::cout << "\nhttp://lab.malab.cn/soft/halign/\n\n";
+    std::cout << "http://lab.malab.cn/soft/halign/\n";
 }
