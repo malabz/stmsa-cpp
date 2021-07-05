@@ -12,12 +12,6 @@ std::string utils::remove_white_spaces(const std::string& str)
     return std::regex_replace(str, white_spaces, "");
 }
 
-void utils::err_exit(const std::string& info)
-{
-    std::cout << info << '\n';
-    exit(1);
-}
-
 std::vector<unsigned char> utils::to_pseudo(const std::string& str)
 {
     std::vector<unsigned char> pseu;
@@ -43,7 +37,7 @@ unsigned char* _get_map()
     using namespace nucleic_acid_pseudo;
 
     static unsigned char map[std::numeric_limits<unsigned char>::max()];
-    memset(map, UNKNOWN, sizeof(map));
+    memset(map, N, sizeof(map));
 
     // map['-'] = GAP; // we could not process sequences with '-'
     map['c'] = map['C'] = C;
@@ -71,4 +65,40 @@ void utils::print_duration(std::chrono::system_clock::time_point time_point)
 {
     using namespace std::chrono;
     std::cout << duration_cast<microseconds>(system_clock::now() - time_point).count();
+}
+
+std::tuple<std::vector<std::string>, std::vector<std::vector<unsigned char>>>
+utils::read_to_pseudo(std::istream& is)
+{
+    std::vector<std::string> identifications;
+    std::vector<std::vector<unsigned char>> sequences;
+
+    std::string line, current;
+
+    while (std::getline(is, line))
+        if (line.size() && line[0] == '>')
+        {
+            identifications.push_back(line.substr(1));
+            break;
+        }
+
+    while (std::getline(is, line))
+    {
+        if (line.size() == 0) continue;
+
+        if (line[0] == '>')
+        {
+            identifications.push_back(line.substr(1));
+            sequences.push_back(to_pseudo(current));
+            current.clear();
+        }
+        else
+        {
+            current += line;
+        }
+    }
+
+    sequences.push_back(to_pseudo(current));
+
+    return std::make_tuple(std::move(identifications), std::move(sequences));
 }

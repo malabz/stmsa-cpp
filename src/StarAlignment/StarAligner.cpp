@@ -45,7 +45,7 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
 {
     static constexpr size_t threshold = 15;
 
-    suffixtree::SuffixTree<nucleic_acid_pseudo::NUMBER> st(_centre.cbegin(), _centre.cend(), nucleic_acid_pseudo::GAP);
+    suffix_tree::SuffixTree<nucleic_acid_pseudo::NUMBER> st(_centre.cbegin(), _centre.cend(), nucleic_acid_pseudo::GAP);
     std::vector<std::array<std::vector<indel>, 2>> all_pairwise_gaps;
 
     using iter = std::vector<unsigned char>::const_iterator;
@@ -59,27 +59,33 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
         std::vector<quadra> intervals;
         intervals.reserve(identical_substrings.size() + 1);
 
-        if (identical_substrings[0][0] || identical_substrings[0][1])
-            intervals.push_back(quadra
-                    ({ 0, identical_substrings[0][0], 0, identical_substrings[0][1] }));
+        if (identical_substrings.empty())
+        {
+            intervals.push_back(quadra({ 0, _centre.size(), 0, _sequences[i].size() }));
+        }
+        else
+        {
+            if (identical_substrings[0][0] || identical_substrings[0][1])
+                intervals.push_back(quadra({ 0, identical_substrings[0][0], 0, identical_substrings[0][1] }));
 
-        for (size_t j = 0, end_index = identical_substrings.size() - 1; j != end_index; ++j)
-            if (identical_substrings[j][0] + identical_substrings[j][2] != identical_substrings[j + 1][0] ||
-                identical_substrings[j][1] + identical_substrings[j][2] != identical_substrings[j + 1][1])
+            for (size_t j = 0, end_index = identical_substrings.size() - 1; j != end_index; ++j)
+                if (identical_substrings[j][0] + identical_substrings[j][2] != identical_substrings[j + 1][0] ||
+                    identical_substrings[j][1] + identical_substrings[j][2] != identical_substrings[j + 1][1])
+                    intervals.push_back(quadra
+                    ({
+                        identical_substrings[j][0] + identical_substrings[j][2], identical_substrings[j + 1][0],
+                        identical_substrings[j][1] + identical_substrings[j][2], identical_substrings[j + 1][1]
+                    }));
+
+            if (identical_substrings.back()[0] + identical_substrings.back()[2] != _centre_len || 
+                identical_substrings.back()[1] + identical_substrings.back()[2] != _lengths[i])
                 intervals.push_back(quadra
                 ({
-                    identical_substrings[j][0] + identical_substrings[j][2], identical_substrings[j + 1][0],
-                    identical_substrings[j][1] + identical_substrings[j][2], identical_substrings[j + 1][1]
+                    identical_substrings.back()[0] + identical_substrings.back()[2], _centre_len,
+                    identical_substrings.back()[1] + identical_substrings.back()[2], _lengths[i]
                 }));
+        }
 
-        if (identical_substrings.back()[0] + identical_substrings.back()[2] != _centre_len || 
-            identical_substrings.back()[1] + identical_substrings.back()[2] != _lengths[i])
-            intervals.push_back(quadra
-            ({
-                identical_substrings.back()[0] + identical_substrings.back()[2], _centre_len,
-                identical_substrings.back()[1] + identical_substrings.back()[2], _lengths[i]
-            }));
-        
         std::array<std::vector<indel>, 2> pairwise_gaps;
         for (size_t j = 0; j != intervals.size(); ++j)
         {

@@ -96,11 +96,6 @@ namespace pairwise_alignment
             _dp_matrix[VER][0][0] = 0;
             _dp_matrix[HOR][0][0] = 0;
             _dp_matrix[DIA][0][0] = 0;
-
-            // _pa_matrix
-
-            for (size_t i = 0; i <= _lhs_len; ++i) { _pa_matrix[VER][i][0] = VER; _pa_matrix[DIA][i][0] = VER; }
-            for (size_t j = 0; j <= _rhs_len; ++j) { _pa_matrix[HOR][0][j] = HOR; _pa_matrix[DIA][0][j] = HOR; }
         }
 
         void _do_dp()
@@ -140,13 +135,13 @@ namespace pairwise_alignment
 
         void _trace_back()
         {
-            int lhs_index = _lhs_len;
-            int rhs_index = _rhs_len;
+            auto lhs_index = _lhs_len;
+            auto rhs_index = _rhs_len;
             unsigned char curr_path = _index_of_max({ _dp_matrix[VER][lhs_index][rhs_index],
                                                       _dp_matrix[HOR][lhs_index][rhs_index],
                                                       _dp_matrix[DIA][lhs_index][rhs_index] });
 
-            while (lhs_index > 0 || rhs_index > 0)
+            while (lhs_index > 0 && rhs_index > 0)
                 switch (curr_path)
                 {
                 case VER:
@@ -163,6 +158,9 @@ namespace pairwise_alignment
                     curr_path = _pa_matrix[curr_path][lhs_index--][rhs_index--];
                     break;
                 }
+
+            for (; lhs_index > 0; --lhs_index) ++_rhs_gaps[rhs_index];
+            for (; rhs_index > 0; --rhs_index) ++_lhs_gaps[lhs_index];
         }
 
         template <typename T>

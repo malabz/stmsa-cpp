@@ -12,7 +12,7 @@ stmsa-x.x.x-win-x64.exe unaligned.fasta output.fasta
 
 * 2021-04-25
 
-  self-defined allocator for suffix tree, which reduce the construction time to about 1 / 3 comparing with ::operator new
+  self-defined allocator for suffix tree, which reduce the construction time to about 1/3 comparing with ::operator new
 
 * 2021-03-29
 

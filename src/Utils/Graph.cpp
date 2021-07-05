@@ -14,16 +14,14 @@ void utils::AdjacencyList::add_edge(size_t from, size_t to, unsigned weight)
 
 std::vector<size_t> utils::AdjacencyList::topological_sort() const
 {
-    std::vector<size_t> topological_sequence;
-    topological_sequence.reserve(nodes.size());
-
     size_t *indegree = new size_t[_node_num]();
     for (size_t i = 0; i != _node_num; ++i)
         for (auto edge : nodes[i])
             ++indegree[edge.to];
 
-    size_t pending = _node_num;
-    while (pending)
+    std::vector<size_t> topological_sequence;
+    topological_sequence.reserve(nodes.size());
+    for (size_t pending = _node_num; pending; )
         for (size_t i = 0; i != _node_num; ++i)
             if (indegree[i] == 0)
             {
@@ -55,14 +53,14 @@ std::vector<size_t> utils::AdjacencyList::get_longest_path() const
 
     for (size_t to = 1; to != _node_num; ++to)
     {
-        const size_t curr_node = topological_sequence[to];
-        for (auto edge : reverse_nodes[curr_node])
+        const size_t target = topological_sequence[to];
+        for (auto edge : reverse_nodes[target])
         {
             unsigned challenger = distance[edge.from] + edge.weight;
-            if (challenger > distance[curr_node])
+            if (challenger > distance[target])
             {
-                distance[curr_node] = challenger;
-                path_record[curr_node] = edge.from;
+                distance[target] = challenger;
+                path_record[target] = edge.from;
             }
         }
     }

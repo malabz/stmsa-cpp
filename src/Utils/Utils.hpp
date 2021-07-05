@@ -10,8 +10,6 @@ namespace utils
 
     std::string remove_white_spaces(const std::string& str);
 
-    void err_exit(const std::string& info = "");
-
     unsigned char to_pseudo(char c);
 
     std::vector<unsigned char> to_pseudo(const std::string& str);
@@ -42,5 +40,8 @@ namespace utils
         for (; first != last; ++first) if (*result < *first) result = first;
         return result;
     }
+
+    std::tuple<std::vector<std::string>, std::vector<std::vector<unsigned char>>>
+    read_to_pseudo(std::istream& is);
 
 }

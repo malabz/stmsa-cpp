@@ -10,19 +10,15 @@ namespace utils
     class Fasta
     {
     private:
-        size_t _read(const std::string& filename);
+        void _read(std::istream& is);
 
     public:
         std::vector<std::string> sequences;
         std::vector<std::string> identifications;
-        const size_t size;
 
-        explicit Fasta(const std::string& infile);
+        explicit Fasta(std::istream& is);
 
         void write_to(std::ostream& os, bool with_idification = true) const;
-
-        static std::tuple<std::vector<std::string>, std::vector<std::vector<unsigned char>>>
-        read_to_pseudo(const std::string& infile);
 
         template<typename InputIterator>
         static void write_to(std::ostream& os, InputIterator sequence_first, InputIterator sequence_last)
