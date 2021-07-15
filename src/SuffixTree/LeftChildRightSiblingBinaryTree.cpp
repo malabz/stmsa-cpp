@@ -163,7 +163,7 @@ void suffix_tree::experiment(const char *in_file, const char *out_file)
         exit(0);
     }
 
-    const auto [identifications, sequences] = utils::read_to_pseudo(ifs);
+    const auto sequences = utils::read_to_pseudo(ifs);
     std::cout << sequences.size() << " sequences found\n";
     if (sequences.size() < 2) return;
 

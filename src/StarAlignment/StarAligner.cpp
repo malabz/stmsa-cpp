@@ -4,12 +4,17 @@
 #include "../Utils/Graph.hpp"
 #include "../PairwiseAlignment/NeedlemanWunshReusable.hpp"
 
-std::vector<std::vector<unsigned char>> star_alignment::StarAligner::align(const std::vector<sequence_type>& sequences)
+std::vector<std::vector<unsigned char>> star_alignment::StarAligner::align(const std::vector<sequence_type> &sequences)
 {
     return StarAligner(sequences)._align();
 }
 
-star_alignment::StarAligner::StarAligner(const std::vector<sequence_type>& sequences):
+auto star_alignment::StarAligner::get_gaps(const std::vector<sequence_type> &sequences) -> std::vector<std::vector<utils::Insertion>>
+{
+    return StarAligner(sequences)._get_gaps();
+}
+
+star_alignment::StarAligner::StarAligner(const std::vector<sequence_type> &sequences):
         _sequences(sequences),
         _row(_sequences.size()),
         _lengths(_set_lengths()),
@@ -41,12 +46,18 @@ std::vector<std::vector<unsigned char>> star_alignment::StarAligner::_align() co
     return _insert_gaps(_merge_results(_pairwise_align()));
 }
 
-auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::array<std::vector<indel>, 2>>
+auto star_alignment::StarAligner::_get_gaps() const
+        -> std::vector<std::vector<utils::Insertion>>
+{
+    return _merge_results(_pairwise_align());
+}
+
+auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::array<std::vector<utils::Insertion>, 2>>
 {
     static constexpr size_t threshold = 15;
 
     suffix_tree::SuffixTree<nucleic_acid_pseudo::NUMBER> st(_centre.cbegin(), _centre.cend(), nucleic_acid_pseudo::GAP);
-    std::vector<std::array<std::vector<indel>, 2>> all_pairwise_gaps;
+    std::vector<std::array<std::vector<utils::Insertion>, 2>> all_pairwise_gaps;
 
     using iter = std::vector<unsigned char>::const_iterator;
     pairwise_alignment::NeedlemanWunshReusable<iter, iter, decltype(pairwise_alignment::default_scoring_matrix)>
@@ -86,7 +97,7 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
                 }));
         }
 
-        std::array<std::vector<indel>, 2> pairwise_gaps;
+        std::array<std::vector<utils::Insertion>, 2> pairwise_gaps;
         for (size_t j = 0; j != intervals.size(); ++j)
         {
             const size_t centre_begin = intervals[j][0];
@@ -101,8 +112,8 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
             auto [lhs_gaps, rhs_gaps] = nw(_centre.cbegin() + centre_begin, _centre.cbegin() + centre_end,
                     _sequences[i].cbegin() + sequence_begin, _sequences[i].cbegin() + sequence_end, flag);
 
-            _converse(lhs_gaps, pairwise_gaps[0], centre_begin);
-            _converse(rhs_gaps, pairwise_gaps[1], sequence_begin);
+            _append(lhs_gaps, pairwise_gaps[0], centre_begin);
+            _append(rhs_gaps, pairwise_gaps[1], sequence_begin);
         }
 
         size_t sequence_gap_num = 0;
@@ -114,7 +125,7 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
     return all_pairwise_gaps;
 }
 
-auto star_alignment::StarAligner::_optimal_path(const std::vector<triple>& identical_substrings)
+auto star_alignment::StarAligner::_optimal_path(const std::vector<triple> &identical_substrings)
         -> std::vector<triple> 
 {
     std::vector<triple> optimal_identical_substrings;
@@ -164,7 +175,7 @@ auto star_alignment::StarAligner::_optimal_path(const std::vector<triple>& ident
     return optimal_identical_substrings;
 }
 
-void star_alignment::StarAligner::_converse(const std::vector<size_t>& src_gaps, std::vector<indel>& des_gaps, size_t start)
+void star_alignment::StarAligner::_append(const std::vector<size_t> &src_gaps, std::vector<utils::Insertion> &des_gaps, size_t start)
 {
     for (size_t i = 0; i != src_gaps.size(); ++i)
         if (src_gaps[i])
@@ -172,17 +183,17 @@ void star_alignment::StarAligner::_converse(const std::vector<size_t>& src_gaps,
             if (des_gaps.size() && des_gaps.back().index == start + i)
                 des_gaps.back().number += src_gaps[i];
             else
-                des_gaps.push_back(indel({ start + i, src_gaps[i] }));
+                des_gaps.push_back(utils::Insertion({ start + i, src_gaps[i] }));
         }
 }
 
-auto star_alignment::StarAligner::_merge_results(const std::vector<std::array<std::vector<indel>, 2>>& pairwise_gaps) const
-        -> std::vector<std::vector<indel>>
+auto star_alignment::StarAligner::_merge_results(const std::vector<std::array<std::vector<utils::Insertion>, 2>> &pairwise_gaps) const
+        -> std::vector<std::vector<utils::Insertion>>
 {
-    std::vector<indel> final_centre_gaps;
+    std::vector<utils::Insertion> final_centre_gaps;
     for (size_t i = 0; i != _row; ++i)
     {
-        const auto& curr_centre_gaps = pairwise_gaps[i][0];
+        const auto &curr_centre_gaps = pairwise_gaps[i][0];
         for (size_t lhs_pointer = 0, rhs_pointer = 0; rhs_pointer != curr_centre_gaps.size(); )
         {
             if (lhs_pointer == final_centre_gaps.size())
@@ -211,16 +222,20 @@ auto star_alignment::StarAligner::_merge_results(const std::vector<std::array<st
         }
     }
 
-    std::vector<std::vector<indel>> final_sequence_gaps;
+    std::vector<std::vector<utils::Insertion>> final_sequence_gaps;
     final_sequence_gaps.reserve(_row);
     for (size_t i = 0; i != _row; ++i)
     {
-        const auto& curr_centre_gaps = pairwise_gaps[i][0];
-        const auto& curr_sequence_gaps = pairwise_gaps[i][1];
+        const auto &curr_centre_gaps = pairwise_gaps[i][0];
+        const auto &curr_sequence_gaps = pairwise_gaps[i][1];
 
-        std::vector<indel> centre_addition = _minus(final_centre_gaps, curr_centre_gaps);
+        std::vector<utils::Insertion> centre_addition;
+        centre_addition.reserve(final_centre_gaps.size());
+        utils::Insertion::minus(final_centre_gaps.cbegin(), final_centre_gaps.cend(),
+                            curr_centre_gaps.cbegin(),  curr_centre_gaps.cend(),
+                            std::back_inserter(centre_addition));
 
-        std::vector<indel> sequence_addition;
+        std::vector<utils::Insertion> sequence_addition;
         for (size_t centre_index = 0, sequence_index = 0, centre_gaps_index = 0, sequence_gaps_index = 0, centre_addition_index = 0;
                 centre_addition_index != centre_addition.size(); ++centre_addition_index)
         {
@@ -247,66 +262,21 @@ auto star_alignment::StarAligner::_merge_results(const std::vector<std::array<st
             if (sequence_addition.size() && sequence_index == sequence_addition.back().index)
                 sequence_addition.back().number += curr_addition.number;
             else
-                sequence_addition.push_back(indel({ sequence_index, curr_addition.number }));
+                sequence_addition.push_back(utils::Insertion({ sequence_index, curr_addition.number }));
         }
 
-        final_sequence_gaps.push_back(_add(curr_sequence_gaps, sequence_addition));
+        std::vector<utils::Insertion> indels_of_current_sequence;
+        indels_of_current_sequence.reserve(curr_sequence_gaps.size() + sequence_addition.size());
+        utils::Insertion::plus(curr_sequence_gaps.cbegin(), curr_sequence_gaps.cend(),
+                           sequence_addition.cbegin(), sequence_addition.cend(),
+                           std::back_inserter(indels_of_current_sequence));
+        final_sequence_gaps.push_back(indels_of_current_sequence);
     }
 
     return final_sequence_gaps;
 }
 
-auto star_alignment::StarAligner::_add(const std::vector<indel>& lhs, const std::vector<indel>& rhs)
-        -> std::vector<indel>
-{
-    std::vector<indel> sum;
-
-    size_t lhs_index = 0, rhs_index = 0;
-    for (; lhs_index != lhs.size() && rhs_index != rhs.size(); )
-        if (lhs[lhs_index].index < rhs[rhs_index].index)
-        {
-            sum.push_back(lhs[lhs_index]);
-            ++lhs_index;
-        }
-        else if (lhs[lhs_index].index > rhs[rhs_index].index)
-        {
-            sum.push_back(rhs[rhs_index]);
-            ++rhs_index;
-        }
-        else
-        {
-            sum.push_back(indel({ lhs[lhs_index].index, lhs[lhs_index].number + rhs[rhs_index].number }));
-            ++lhs_index;
-            ++rhs_index;
-        }
-
-    sum.insert(sum.cend(), lhs.cbegin() + lhs_index, lhs.cend());
-    sum.insert(sum.cend(), rhs.cbegin() + rhs_index, rhs.cend());
-    return sum;
-}
-
-// assume lhs >= rhs
-auto star_alignment::StarAligner::_minus(const std::vector<indel>& lhs, const std::vector<indel>& rhs)
-        -> std::vector<indel>
-{
-    std::vector<indel> difference;
-    difference.reserve(lhs.size());
-
-    size_t lhs_index = 0;
-    for (size_t rhs_index = 0; rhs_index != rhs.size(); ++lhs_index, ++rhs_index)
-    {
-        while (lhs[lhs_index].index != rhs[rhs_index].index)
-            difference.push_back(lhs[lhs_index++]);
-
-        size_t distance = lhs[lhs_index].number - rhs[rhs_index].number;
-        if (distance) difference.push_back(indel({ lhs[lhs_index].index, distance }));
-    }
-
-    difference.insert(difference.cend(), lhs.cbegin() + lhs_index, lhs.cend());
-    return difference;
-}
-
-auto star_alignment::StarAligner::_insert_gaps(const std::vector<std::vector<indel>>& gaps) const
+auto star_alignment::StarAligner::_insert_gaps(const std::vector<std::vector<utils::Insertion>> &gaps) const
         -> std::vector<sequence_type>
 {
     size_t length = _lengths[0];
@@ -316,25 +286,10 @@ auto star_alignment::StarAligner::_insert_gaps(const std::vector<std::vector<ind
     aligned.reserve(_row);
 
     for (size_t i = 0; i != _row; ++i)
-        aligned.push_back(_insert_gaps(_sequences[i], gaps[i], length));
-    return aligned;
-}
-
-auto star_alignment::StarAligner::_insert_gaps(const sequence_type& sequence, const std::vector<indel>& gaps, size_t length)
-        -> sequence_type
-{
-    sequence_type gapped;
-    gapped.reserve(length);
-
-    size_t sequence_index = 0;
-    for (const auto gap : gaps)
     {
-        const size_t new_sequence_index = sequence_index + (gap.index - sequence_index);
-        gapped.insert(gapped.cend(), sequence.cbegin() + sequence_index, sequence.cbegin() + new_sequence_index);
-        gapped.insert(gapped.cend(), gap.number, nucleic_acid_pseudo::GAP);
-
-        sequence_index = new_sequence_index;
+        aligned.emplace_back(length);
+        utils::Insertion::insert_gaps(_sequences[i].cbegin(), _sequences[i].cend(),
+                gaps[i].cbegin(), gaps[i].cend(), aligned.back().begin(), nucleic_acid_pseudo::GAP);
     }
-    gapped.insert(gapped.cend(), sequence.cbegin() + sequence_index, sequence.cend());
-    return gapped;
+    return aligned;
 }

@@ -44,10 +44,10 @@ namespace utils
 
             for (difference_type i = 0; i != len - 1; ++sequence_first, ++identification_first, ++i)
             {
-                os << '<' << *identification_first << '\n';
+                os << '>' << *identification_first << '\n';
                 os << *sequence_first << '\n';
             }
-            os << '<' << *identification_first << '\n';
+            os << '>' << *identification_first << '\n';
             os << *sequence_first;
         }
 

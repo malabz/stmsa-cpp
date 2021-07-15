@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../SuffixTree/SuffixTree.hpp"
+#include "../Utils/Utils.hpp"
 
 #include <vector>
 #include <array>
@@ -16,37 +17,29 @@ namespace star_alignment
         using sequence_type = std::vector<unsigned char>;
 
     public:
-        static std::vector<sequence_type> align(const std::vector<sequence_type>& sequences);
-        static std::vector<triple> _optimal_path(const std::vector<triple>& identical_substrings);
+        static std::vector<sequence_type> align(const std::vector<sequence_type> &sequences);
+        static std::vector<std::vector<utils::Insertion>> get_gaps(const std::vector<sequence_type> &sequences);
+
+        static std::vector<triple> _optimal_path(const std::vector<triple> &identical_substrings);
 
     private:
-        struct indel
-        {
-            size_t index;
-            size_t number;
-
-            bool operator==(const indel& rhs)  { return index == rhs.index && number == rhs.number; }
-        };
-
-        StarAligner(const std::vector<sequence_type>& sequences);
+        StarAligner(const std::vector<sequence_type> &sequences);
 
         std::vector<sequence_type> _align() const;
+        std::vector<std::vector<utils::Insertion>> _get_gaps() const;
 
         std::vector<size_t> _set_lengths() const;
         sequence_type _set_centre() const;
 
         // main steps
-        std::vector<std::array<std::vector<indel>, 2>> _pairwise_align() const;
-        std::vector<std::vector<indel>> _merge_results(const std::vector<std::array<std::vector<indel>, 2>>& pairwise_gaps) const;
-        std::vector<sequence_type> _insert_gaps(const std::vector<std::vector<indel>>& gaps) const;
+        std::vector<std::array<std::vector<utils::Insertion>, 2>> _pairwise_align() const;
+        std::vector<std::vector<utils::Insertion>> _merge_results(const std::vector<std::array<std::vector<utils::Insertion>, 2>> &pairwise_gaps) const;
+        std::vector<sequence_type> _insert_gaps(const std::vector<std::vector<utils::Insertion>> &gaps) const;
 
         // support
-        static void _converse(const std::vector<size_t>& src_gaps, std::vector<indel>& des_gaps, size_t start);
-        static std::vector<indel> _add(const std::vector<indel>& lhs, const std::vector<indel>& rhs);
-        static std::vector<indel> _minus(const std::vector<indel>& lhs, const std::vector<indel>& rhs);
-        static sequence_type _insert_gaps(const sequence_type& sequence, const std::vector<indel>& gaps, size_t length);
+        static void _append(const std::vector<size_t> &src_gaps, std::vector<utils::Insertion> &des_gaps, size_t start);
 
-        const std::vector<sequence_type>& _sequences;
+        const std::vector<sequence_type> &_sequences;
         const size_t _row;
         const std::vector<size_t> _lengths;
 

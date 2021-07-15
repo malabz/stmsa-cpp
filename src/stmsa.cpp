@@ -40,16 +40,13 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    const auto [identifications, sequences] = utils::read_to_pseudo(ifs);
-    std::cout << sequences.size() << " sequences found\n";
-    if (sequences.size() < 2) exit(0);
+    const auto pseudo_sequences = utils::read_to_pseudo(ifs);
+    std::cout << pseudo_sequences.size() << " sequences found\n";
+    if (pseudo_sequences.size() < 2) exit(0);
 
     auto align_start = std::chrono::system_clock::now();
-    auto aligned = star_alignment::StarAligner::align(sequences);
+    auto insertions = star_alignment::StarAligner::get_gaps(pseudo_sequences);
     utils::print_duration(align_start, "aligning consumes"); std::cout << '\n';
-
-    std::vector<std::string> outputs; outputs.reserve(sequences.size());
-    utils::transform_from_pseudo(aligned.cbegin(), aligned.cend(), std::back_insert_iterator(outputs));
 
     std::ofstream ofs(argv[2]);
     if (!ofs)
@@ -58,7 +55,12 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    utils::Fasta::write_to(ofs, outputs.cbegin(), outputs.cend());
+    ifs.clear();
+    ifs.seekg(0);
+    utils::insert_and_write(ofs, ifs, insertions);
+
+    ifs.close();
+    ofs.close();
 
     utils::print_duration(start_point, "total"); std::cout << '\n';
     print_license();
