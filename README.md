@@ -1,6 +1,6 @@
 # Multiple Sequence Alignment with Suffix Tree
 
-This project is aimed at improving a part of [HAlign2.0](https://github.com/malabz/HAlign), which could align multiple nucleotide sequences fast and accurately.
+This project is aimed at improving a part of [HAlign](https://github.com/malabz/HAlign), which could align multiple nucleotide sequences fast and accurately.
 
 ## Usage
 
@@ -9,6 +9,9 @@ stmsa-x.x.x-win-x64.exe unaligned.fasta output.fasta
 ```
 
 ## Change Log
+
+* 2021-07-15
+  further decrease the space requirement
 
 * 2021-04-25
 

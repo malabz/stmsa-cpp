@@ -6,13 +6,13 @@
 #include <iostream>
 #include <limits>
 
-std::string utils::remove_white_spaces(const std::string& str)
+std::string utils::remove_white_spaces(const std::string &str)
 {
     static const std::regex white_spaces("\\s+");
     return std::regex_replace(str, white_spaces, "");
 }
 
-std::vector<unsigned char> utils::to_pseudo(const std::string& str)
+std::vector<unsigned char> utils::to_pseudo(const std::string &str)
 {
     std::vector<unsigned char> pseu;
     pseu.reserve(str.size());
@@ -21,7 +21,7 @@ std::vector<unsigned char> utils::to_pseudo(const std::string& str)
     return pseu;
 }
 
-std::string utils::from_pseudo(const std::vector<unsigned char>& pseu)
+std::string utils::from_pseudo(const std::vector<unsigned char> &pseu)
 {
     static constexpr char map[nucleic_acid_pseudo::NUMBER]{ '-', 'c', 'g', 'a', 't', 'n' };
 
@@ -55,7 +55,7 @@ unsigned char utils::to_pseudo(char ch)
     return _map[ch];
 }
 
-void utils::print_duration(std::chrono::system_clock::time_point time_point, const std::string& info)
+void utils::print_duration(std::chrono::system_clock::time_point time_point, const std::string &info)
 {
     using namespace std::chrono;
     std::cout << info << ": " << duration_cast<microseconds>(system_clock::now() - time_point).count() << " us";
@@ -67,38 +67,80 @@ void utils::print_duration(std::chrono::system_clock::time_point time_point)
     std::cout << duration_cast<microseconds>(system_clock::now() - time_point).count();
 }
 
-std::tuple<std::vector<std::string>, std::vector<std::vector<unsigned char>>>
-utils::read_to_pseudo(std::istream& is)
+std::vector<std::vector<unsigned char>> utils::read_to_pseudo(std::istream &is)
 {
-    std::vector<std::string> identifications;
     std::vector<std::vector<unsigned char>> sequences;
 
-    std::string line, current;
+    std::string each_line, each_sequence;
 
-    while (std::getline(is, line))
-        if (line.size() && line[0] == '>')
-        {
-            identifications.push_back(line.substr(1));
+    while (std::getline(is, each_line))
+        if (each_line.size() && each_line[0] == '>')
             break;
-        }
 
-    while (std::getline(is, line))
+    while (std::getline(is, each_line))
     {
-        if (line.size() == 0) continue;
+        if (each_line.size() == 0) continue;
 
-        if (line[0] == '>')
+        if (each_line[0] == '>')
         {
-            identifications.push_back(line.substr(1));
-            sequences.push_back(to_pseudo(current));
-            current.clear();
+            sequences.push_back(to_pseudo(each_sequence));
+            each_sequence.clear();
         }
         else
         {
-            current += line;
+            each_sequence += each_line;
+        }
+    }
+    sequences.push_back(to_pseudo(each_sequence));
+
+    return sequences;
+}
+
+void utils::insert_and_write(std::ostream &os, std::istream &is, const std::vector<std::vector<Insertion>> &insertions)
+{
+    const size_t sequence_number = insertions.size();
+    std::string each_line, each_sequence;
+
+    while (std::getline(is, each_line))
+        if (each_line.size() && each_line[0] == '>')
+        {
+            os << each_line << '\n';
+            break;
+        }
+
+    std::string each_sequence_aligned;
+    for (unsigned count = 0, length; std::getline(is, each_line); )
+    {
+        if (each_line.size() == 0) continue;
+
+        if (each_line[0] == '>')
+        {
+            if (count == 0)
+            {
+                length = each_sequence.size();
+                for (auto insertion : insertions[0])
+                    length += insertion.number;
+                each_sequence_aligned.reserve(length);
+                each_sequence.reserve(length);
+            }
+
+            utils::Insertion::insert_gaps(each_sequence.cbegin(), each_sequence.cend(),
+                    insertions[count].cbegin(), insertions[count].cend(), std::back_inserter(each_sequence_aligned), '-');
+            os << each_sequence_aligned;
+            if (++count != sequence_number) os << '\n';
+
+            each_sequence.clear();
+            each_sequence_aligned.clear();
+
+            os << each_line << '\n';
+        }
+        else
+        {
+            each_sequence += each_line;
         }
     }
 
-    sequences.push_back(to_pseudo(current));
-
-    return std::make_tuple(std::move(identifications), std::move(sequences));
+    utils::Insertion::insert_gaps(each_sequence.cbegin(), each_sequence.cend(),
+            insertions.back().cbegin(), insertions.back().cend(), std::back_inserter(each_sequence_aligned), '-');
+    os << each_sequence_aligned << '\n';
 }
