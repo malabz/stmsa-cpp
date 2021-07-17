@@ -14,12 +14,12 @@ auto star_alignment::StarAligner::get_gaps(const std::vector<sequence_type> &seq
     return StarAligner(sequences)._get_gaps();
 }
 
-star_alignment::StarAligner::StarAligner(const std::vector<sequence_type> &sequences):
-        _sequences(sequences),
-        _row(_sequences.size()),
-        _lengths(_set_lengths()),
-        _centre(_set_centre()),
-        _centre_len(_centre.size())
+star_alignment::StarAligner::StarAligner(const std::vector<sequence_type> &sequences)
+        : _sequences(sequences)
+        , _row(_sequences.size())
+        , _lengths(_set_lengths())
+        , _centre(_set_centre())
+        , _centre_len(_centre.size())
 {}
 
 std::vector<size_t> star_alignment::StarAligner::_set_lengths() const

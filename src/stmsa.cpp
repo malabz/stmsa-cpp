@@ -17,11 +17,13 @@
 #include "StarAlignment/StarAligner.hpp"
 #include "Utils/Fasta.hpp"
 #include "Utils/Utils.hpp"
+#include "Utils/Arguments.hpp"
 
+#include <boost/program_options.hpp>
 #include <fstream>
 
-void print_usage(const char* argv0);
 void print_license();
+bool parse_arguments(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
@@ -29,14 +31,14 @@ int main(int argc, char **argv)
     _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
 
-    if (argc != 3) { print_usage(argv[0]); exit(0); }
+    parse_arguments(argc, argv);
 
     auto start_point = std::chrono::system_clock::now();
 
-    std::ifstream ifs(argv[1]);
+    std::ifstream ifs(arguments::in_file_name);
     if (!ifs)
     {
-        std::cout << "cannot access file " << argv[1] << '\n';
+        std::cout << "cannot access file " << arguments::in_file_name << '\n';
         exit(0);
     }
 
@@ -48,10 +50,10 @@ int main(int argc, char **argv)
     auto insertions = star_alignment::StarAligner::get_gaps(pseudo_sequences);
     utils::print_duration(align_start, "aligning consumes"); std::cout << '\n';
 
-    std::ofstream ofs(argv[2]);
+    std::ofstream ofs(arguments::out_file_name);
     if (!ofs)
     {
-        std::cout << "cannot write file " << argv[2] << '\n';
+        std::cout << "cannot write file " << arguments::out_file_name << '\n';
         exit(0);
     }
 
@@ -68,11 +70,38 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void print_usage(const char* argv0)
+bool parse_arguments(int argc, char **argv)
 {
-    std::cout << "usage: \n";
-    std::cout << argv0 << " unaligned.fasta output.fasta\n";
-    print_license();
+    auto in_file_name_value = boost::program_options::value<std::string>(&arguments::in_file_name);
+    in_file_name_value->required();
+
+    auto out_file_name_value = boost::program_options::value<std::string>(&arguments::out_file_name);
+    out_file_name_value->default_value("aligned.fasta");
+
+    boost::program_options::options_description od("options");
+    od.add_options()
+        ("help,h", "produce help message")
+        ("in,i", in_file_name_value, "name of the input file in fasta format")
+        ("out,o", out_file_name_value, "name of the output file in fasta format")
+        ("matrix", "output a character matrix rather than a fasta file");
+
+    try
+    {
+        boost::program_options::variables_map vm;
+        boost::program_options::store(boost::program_options::parse_command_line(argc, argv, od), vm);
+
+        if (vm.find("help") != vm.cend()) { std::cout << od << '\n'; exit(0); }
+        boost::program_options::notify(vm);
+
+        arguments::output_matrix = vm.find("matrix") != vm.cend();
+    }
+    catch(const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+        exit(0);
+    }
+
+    return true;
 }
 
 void print_license()

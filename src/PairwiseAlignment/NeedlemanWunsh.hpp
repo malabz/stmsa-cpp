@@ -36,32 +36,33 @@ namespace pairwise_alignment
         NeedlemanWunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
                        RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
                        unsigned flag, const ScoringMatrixType& scoring_matrix,
-                       int gap_open, int gap_extention):
+                       int gap_open, int gap_extention)
 
-                _lhs_first(lhs_first), _lhs_last(lhs_last),
-                _rhs_first(rhs_first), _rhs_last(rhs_last),
+                : _lhs_first(lhs_first), _lhs_last(lhs_last)
+                , _rhs_first(rhs_first), _rhs_last(rhs_last)
 
-                _lhs_len(std::distance(lhs_first, lhs_last)),
-                _rhs_len(std::distance(rhs_first, rhs_last)),
+                , _lhs_len(std::distance(lhs_first, lhs_last))
+                , _rhs_len(std::distance(rhs_first, rhs_last))
 
-                _scoring_matrix(scoring_matrix),
-                _l_ending(flag & LEFT_ENDING),
-                _r_ending(flag & RIGHT_ENDING),
+                , _scoring_matrix(scoring_matrix)
+                , _l_ending(flag & LEFT_ENDING)
+                , _r_ending(flag & RIGHT_ENDING)
 
-                _op(gap_open),
-                _l_op(_l_ending ? 0 : gap_open),
-                _r_op(_r_ending ? 0 : gap_open),
+                , _op(gap_open)
+                , _l_op(_l_ending ? 0 : gap_open)
+                , _r_op(_r_ending ? 0 : gap_open)
 
-                _ex(gap_extention),
-                _l_ex(_l_ending ? 0 : gap_extention),
-                _r_ex(_r_ending ? 0 : gap_extention),
+                , _ex(gap_extention)
+                , _l_ex(_l_ending ? 0 : gap_extention)
+                , _r_ex(_r_ending ? 0 : gap_extention)
 
-                _dp_matrix(NUM, d2im(_lhs_len + 1, d1im(_rhs_len + 1, 0))),
-                _pa_matrix(NUM, d2pm(_lhs_len + 1, d1pm(_rhs_len + 1))),
+                , _dp_matrix(NUM, d2im(_lhs_len + 1, d1im(_rhs_len + 1, 0)))
+                , _pa_matrix(NUM, d2pm(_lhs_len + 1, d1pm(_rhs_len + 1)))
 
-                _lhs_gaps(_lhs_len + 1, 0),
-                _rhs_gaps(_rhs_len + 1, 0)
-        {}
+                , _lhs_gaps(_lhs_len + 1, 0)
+                , _rhs_gaps(_rhs_len + 1, 0)
+        {
+        }
 
         std::tuple<gap_vector_type, gap_vector_type> _align()
         {

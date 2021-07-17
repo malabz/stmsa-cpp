@@ -1,3 +1,5 @@
+#pragma once
+
 #include "SuffixTree.hpp"
 #include "../Utils/NucleicAcidColumn.hpp"
 

@@ -12,6 +12,7 @@
 
 namespace utils
 {
+
     std::string remove_white_spaces(const std::string &str);
 
     unsigned char to_pseudo(char c);
@@ -48,5 +49,23 @@ namespace utils
     std::vector<std::vector<unsigned char>> read_to_pseudo(std::istream &is);
 
     void insert_and_write(std::ostream &os, std::istream &is, const std::vector<std::vector<Insertion>> &insertions);
+
+    template<typename InputIterator>
+    static void cut_and_write(std::ostream &os, InputIterator first, InputIterator last)
+    {
+        const size_t sequence_length = std::distance(first, last);
+
+        for (size_t i = 0; i < sequence_length; i += Fasta::max_line_length)
+        {
+            if (i) os << '\n';
+
+            size_t write_length = sequence_length - i;
+            if (write_length > Fasta::max_line_length) write_length = Fasta::max_line_length;
+
+            const auto begin = first;
+            std::advance(first, write_length);
+            std::copy(begin, first, std::ostream_iterator<decltype(*first)>(os));
+        }
+    }
 
 }

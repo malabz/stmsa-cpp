@@ -1,6 +1,7 @@
 #include "Utils.hpp"
 #include "Pseudo.hpp"
 #include "Fasta.hpp"
+#include "Arguments.hpp"
 
 #include <regex>
 #include <iostream>
@@ -104,7 +105,7 @@ void utils::insert_and_write(std::ostream &os, std::istream &is, const std::vect
     while (std::getline(is, each_line))
         if (each_line.size() && each_line[0] == '>')
         {
-            os << each_line << '\n';
+            if (arguments::output_matrix == false) os << each_line << '\n';
             break;
         }
 
@@ -126,13 +127,17 @@ void utils::insert_and_write(std::ostream &os, std::istream &is, const std::vect
 
             utils::Insertion::insert_gaps(each_sequence.cbegin(), each_sequence.cend(),
                     insertions[count].cbegin(), insertions[count].cend(), std::back_inserter(each_sequence_aligned), '-');
-            os << each_sequence_aligned;
-            if (++count != sequence_number) os << '\n';
+            if (arguments::output_matrix)
+                os << each_sequence_aligned;
+            else
+                Fasta::cut_and_write(os, each_sequence_aligned);
+            os << '\n';
 
             each_sequence.clear();
             each_sequence_aligned.clear();
+            ++count;
 
-            os << each_line << '\n';
+            if (arguments::output_matrix == false) os << each_line << '\n';
         }
         else
         {
@@ -142,5 +147,8 @@ void utils::insert_and_write(std::ostream &os, std::istream &is, const std::vect
 
     utils::Insertion::insert_gaps(each_sequence.cbegin(), each_sequence.cend(),
             insertions.back().cbegin(), insertions.back().cend(), std::back_inserter(each_sequence_aligned), '-');
-    os << each_sequence_aligned << '\n';
+    if (arguments::output_matrix)
+        os << each_sequence_aligned;
+    else
+        Fasta::cut_and_write(os, each_sequence_aligned);
 }

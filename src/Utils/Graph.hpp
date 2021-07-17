@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 
 namespace utils
@@ -12,9 +14,9 @@ namespace utils
             size_t to;
             unsigned weight;
 
-            edge_type(size_t to, unsigned weight):
-                to(to),
-                weight(weight)
+            edge_type(size_t to, unsigned weight)
+                : to(to)
+                , weight(weight)
             {}
         };
 
@@ -24,9 +26,9 @@ namespace utils
             size_t from;
             unsigned weight;
 
-            reverse_edge_type(size_t from, unsigned weight):
-                from(from),
-                weight(weight)
+            reverse_edge_type(size_t from, unsigned weight)
+                : from(from)
+                , weight(weight)
             {}
         };
 
@@ -44,9 +46,8 @@ namespace utils
         std::vector<size_t> topological_sort() const;
 
     private:
-
-        size_t _edge_num;
         size_t _node_num;
+        // size_t _edge_num;
     };
 
     // assume that nodes with higher index cannot have an edge linking to a node with lower index

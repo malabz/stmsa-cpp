@@ -1,15 +1,17 @@
 #include "Graph.hpp"
+
 #include <stdexcept>
 
-utils::AdjacencyList::AdjacencyList(size_t nodes_number):
-    nodes(nodes_number),
-    _node_num(nodes_number)
+utils::AdjacencyList::AdjacencyList(size_t nodes_number)
+    : nodes(nodes_number)
+    , _node_num(nodes_number)
+    // , _edge_num(0)
 {}
 
 void utils::AdjacencyList::add_edge(size_t from, size_t to, unsigned weight)
 {
     nodes[from].emplace_back(to, weight);
-    ++_edge_num;
+    // ++_edge_num;
 }
 
 std::vector<size_t> utils::AdjacencyList::topological_sort() const
