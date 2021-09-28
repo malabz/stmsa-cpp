@@ -114,9 +114,9 @@ namespace suffix_tree
         }
 
         template<typename RandomAccessIterator>
-        std::vector<std::array<size_t, 3>> get_identical_substrings(RandomAccessIterator first, RandomAccessIterator last, size_t threshold) const
+        std::vector<std::array<size_t, 3>> get_common_substrings(RandomAccessIterator first, RandomAccessIterator last, size_t threshold) const
         {
-            std::vector<std::array<size_t, 3>> identical_substrings;
+            std::vector<std::array<size_t, 3>> common_substrings;
             const size_t rhs_len = last - first;
 
             // auto set_array = new std::unordered_set<size_t>*[length]();
@@ -140,7 +140,7 @@ namespace suffix_tree
                     //     auto set = set_array[lhs_end];
                     //     if (set == nullptr || set->find(rhs_end) == set->cend())
                     //     {
-                    //         identical_substrings.push_back(std::array<size_t, 3>({ lhs_bgn, rhs_bgn, found[0] }));
+                    //         common_substrings.push_back(std::array<size_t, 3>({ lhs_bgn, rhs_bgn, found[0] }));
 
                     //         if (set == nullptr) set_array[lhs_end] = new std::unordered_set<size_t>();
                     //         set_array[lhs_end]->insert(rhs_end);
@@ -148,7 +148,7 @@ namespace suffix_tree
                     // }
 
                     for (size_t i = 1; i != found.size(); ++i)
-                        identical_substrings.push_back(std::array<size_t, 3>({ found[i], rhs_index, found[0] }));
+                        common_substrings.push_back(std::array<size_t, 3>({ found[i], rhs_index, found[0] }));
 
                     rhs_index += found[0] - threshold + 1;
                 }
@@ -156,7 +156,7 @@ namespace suffix_tree
 
             // for (size_t i = 0; i != length; ++i) if (set_array[i]) delete set_array[i];
             // delete[] set_array;
-            return identical_substrings;
+            return common_substrings;
         }
 
         std::vector<std::vector<unsigned char>> get_all_suffixes() const
@@ -255,7 +255,7 @@ namespace suffix_tree
             }
         }
 
-        void _delete_tree(Node *tree)
+        static void _delete_tree(Node *tree)
         {
             if (tree && tree->children)
                 for (size_t i = 0; i != width; ++i)
@@ -266,7 +266,7 @@ namespace suffix_tree
 
     private:
         class Allocator;
-        Allocator _allocator;
+        mutable Allocator _allocator;
 
     public:
         Node *const root;

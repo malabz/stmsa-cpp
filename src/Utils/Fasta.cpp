@@ -17,30 +17,25 @@ void utils::Fasta::write_to(std::ostream &os, bool with_identification) const
 
 void utils::Fasta::_read(std::istream &is)
 {
-    std::string each_line, each_sequence;
-
-    while (std::getline(is, each_line))
-        if (each_line.size() && each_line[0] == '>')
-        {
-            identifications.push_back(each_line.substr(1));
-            break;
-        }
-
-    while (std::getline(is, each_line))
+    std::string each_line;
+    std::string each_sequence;
+    for (bool flag = false; std::getline(is, each_line); )
     {
-        if (each_line.size() == 0) continue;
+        if (each_line.size() == 0)
+            continue;
 
         if (each_line[0] == '>')
         {
             identifications.push_back(each_line.substr(1));
-            sequences.push_back(std::move(each_sequence));
+            if (flag)
+                sequences.push_back(std::move(each_sequence));
+            flag = true;
         }
-        else
+        else if (flag)
         {
             each_sequence += each_line;
         }
     }
-
     sequences.push_back(each_sequence);
 }
 

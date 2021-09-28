@@ -20,7 +20,7 @@ namespace star_alignment
         static std::vector<sequence_type> align(const std::vector<sequence_type> &sequences);
         static std::vector<std::vector<utils::Insertion>> get_gaps(const std::vector<sequence_type> &sequences);
 
-        static std::vector<triple> _optimal_path(const std::vector<triple> &identical_substrings);
+        static std::vector<triple> _optimal_path(const std::vector<triple> &common_substrings);
 
     private:
         StarAligner(const std::vector<sequence_type> &sequences);

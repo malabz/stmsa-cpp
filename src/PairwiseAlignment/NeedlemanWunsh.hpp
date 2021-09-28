@@ -18,7 +18,7 @@ namespace pairwise_alignment
         std::tuple<std::vector<size_t>, std::vector<size_t>>
         needleman_wunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
                         RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
-                        unsigned flag, const ScoringMatrixType& scoring_matrix,
+                        unsigned flag, const ScoringMatrixType &scoring_matrix,
                         int gap_open, int gap_extention);
 
         using gap_vector_type = std::vector<size_t>;
@@ -35,7 +35,7 @@ namespace pairwise_alignment
 
         NeedlemanWunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
                        RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
-                       unsigned flag, const ScoringMatrixType& scoring_matrix,
+                       unsigned flag, const ScoringMatrixType &scoring_matrix,
                        int gap_open, int gap_extention)
 
                 : _lhs_first(lhs_first), _lhs_last(lhs_last)
@@ -185,7 +185,7 @@ namespace pairwise_alignment
         static constexpr int NEGATIVE_INFINITY = std::numeric_limits<int>::min() / 2;
 
         // scoring
-        const ScoringMatrixType& _scoring_matrix;
+        const ScoringMatrixType &_scoring_matrix;
         const bool               _l_ending, _r_ending;
         const int                _op, _l_op, _r_op;
         const int                _ex, _l_ex, _r_ex;
@@ -211,7 +211,7 @@ namespace pairwise_alignment
     needleman_wunsh(RandomAccessIterator1 lhs_first, RandomAccessIterator1 lhs_last,
                     RandomAccessIterator2 rhs_first, RandomAccessIterator2 rhs_last,
                     unsigned flag = DEFAULT,
-                    const ScoringMatrixType& scoring_matrix = default_scoring_matrix,
+                    const ScoringMatrixType &scoring_matrix = default_scoring_matrix,
                     int gap_open = default_gap_open,
                     int gap_extention = default_gap_extention)
     {

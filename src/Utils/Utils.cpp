@@ -33,7 +33,7 @@ std::string utils::from_pseudo(const std::vector<unsigned char> &pseu)
     return str;
 }
 
-unsigned char* _get_map()
+unsigned char *_get_map()
 {
     using namespace nucleic_acid_pseudo;
 
@@ -49,45 +49,34 @@ unsigned char* _get_map()
     return map;
 }
 
-static const unsigned char* _map = _get_map();
+static const unsigned char *_map = _get_map();
 
 unsigned char utils::to_pseudo(char ch)
 {
     return _map[ch];
 }
 
-void utils::print_duration(std::chrono::system_clock::time_point time_point, const std::string &info)
-{
-    using namespace std::chrono;
-    std::cout << info << ": " << duration_cast<microseconds>(system_clock::now() - time_point).count() << " us";
-}
-
-void utils::print_duration(std::chrono::system_clock::time_point time_point)
-{
-    using namespace std::chrono;
-    std::cout << duration_cast<microseconds>(system_clock::now() - time_point).count();
-}
-
 std::vector<std::vector<unsigned char>> utils::read_to_pseudo(std::istream &is)
 {
     std::vector<std::vector<unsigned char>> sequences;
 
-    std::string each_line, each_sequence;
-
-    while (std::getline(is, each_line))
-        if (each_line.size() && each_line[0] == '>')
-            break;
-
-    while (std::getline(is, each_line))
+    std::string each_line;
+    std::string each_sequence;
+    for (bool flag = false; std::getline(is, each_line); )
     {
-        if (each_line.size() == 0) continue;
+        if (each_line.size() == 0)
+            continue;
 
         if (each_line[0] == '>')
         {
-            sequences.push_back(to_pseudo(each_sequence));
-            each_sequence.clear();
+            if (flag)
+            {
+                sequences.push_back(to_pseudo(each_sequence));
+                each_sequence.clear();
+            }
+            flag = true;
         }
-        else
+        else if (flag)
         {
             each_sequence += each_line;
         }
@@ -100,46 +89,48 @@ std::vector<std::vector<unsigned char>> utils::read_to_pseudo(std::istream &is)
 void utils::insert_and_write(std::ostream &os, std::istream &is, const std::vector<std::vector<Insertion>> &insertions)
 {
     const size_t sequence_number = insertions.size();
-    std::string each_line, each_sequence;
 
-    while (std::getline(is, each_line))
-        if (each_line.size() && each_line[0] == '>')
-        {
-            if (arguments::output_matrix == false) os << each_line << '\n';
-            break;
-        }
-
+    std::string each_line;
+    std::string each_sequence;
     std::string each_sequence_aligned;
-    for (unsigned count = 0, length; std::getline(is, each_line); )
+    for (unsigned count = 0, length, flag = false; std::getline(is, each_line); )
     {
-        if (each_line.size() == 0) continue;
+        if (each_line.size() == 0)
+            continue;
 
         if (each_line[0] == '>')
         {
-            if (count == 0)
+            if (flag)
             {
-                length = each_sequence.size();
-                for (auto insertion : insertions[0])
-                    length += insertion.number;
-                each_sequence_aligned.reserve(length);
-                each_sequence.reserve(length);
+                if (count == 0)
+                {
+                    length = each_sequence.size();
+                    for (auto insertion : insertions[0])
+                        length += insertion.number;
+
+                    each_sequence_aligned.reserve(length);
+                    each_sequence.reserve(length);
+                }
+
+                utils::Insertion::insert_gaps(each_sequence.cbegin(), each_sequence.cend(),
+                        insertions[count].cbegin(), insertions[count].cend(), std::back_inserter(each_sequence_aligned), '-');
+
+                if (arguments::output_matrix)
+                    os << each_sequence_aligned;
+                else
+                    Fasta::cut_and_write(os, each_sequence_aligned);
+                os << '\n';
+
+                each_sequence.clear();
+                each_sequence_aligned.clear();
+                ++count;
             }
 
-            utils::Insertion::insert_gaps(each_sequence.cbegin(), each_sequence.cend(),
-                    insertions[count].cbegin(), insertions[count].cend(), std::back_inserter(each_sequence_aligned), '-');
-            if (arguments::output_matrix)
-                os << each_sequence_aligned;
-            else
-                Fasta::cut_and_write(os, each_sequence_aligned);
-            os << '\n';
-
-            each_sequence.clear();
-            each_sequence_aligned.clear();
-            ++count;
-
-            if (arguments::output_matrix == false) os << each_line << '\n';
+            if (arguments::output_matrix == false)
+                os << each_line << '\n';
+            flag = true;
         }
-        else
+        else if (flag)
         {
             each_sequence += each_line;
         }
@@ -147,6 +138,7 @@ void utils::insert_and_write(std::ostream &os, std::istream &is, const std::vect
 
     utils::Insertion::insert_gaps(each_sequence.cbegin(), each_sequence.cend(),
             insertions.back().cbegin(), insertions.back().cend(), std::back_inserter(each_sequence_aligned), '-');
+
     if (arguments::output_matrix)
         os << each_sequence_aligned;
     else

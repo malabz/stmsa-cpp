@@ -65,9 +65,9 @@ void suffix_tree::LeftChildRightSiblingBinaryTree::_clear(Node *tree)
 
 template <typename RandomAccessIterator>
 std::vector<std::array<size_t, 3>>
-suffix_tree::LeftChildRightSiblingBinaryTree::get_identical_substrings(RandomAccessIterator first, RandomAccessIterator last, size_t threshold) const
+suffix_tree::LeftChildRightSiblingBinaryTree::get_common_substrings(RandomAccessIterator first, RandomAccessIterator last, size_t threshold) const
 {
-    std::vector<std::array<size_t, 3>> identical_substrings;
+    std::vector<std::array<size_t, 3>> common_substrings;
     const size_t rhs_len = last - first;
 
     for (size_t rhs_index = 0; rhs_index < rhs_len; )
@@ -81,13 +81,13 @@ suffix_tree::LeftChildRightSiblingBinaryTree::get_identical_substrings(RandomAcc
         else
         {
             for (size_t i = 1; i != found.size(); ++i)
-                identical_substrings.push_back(std::array<size_t, 3>({ found[i], rhs_index, found[0] }));
+                common_substrings.push_back(std::array<size_t, 3>({ found[i], rhs_index, found[0] }));
 
             rhs_index += found[0] - threshold + 1;
         }
     }
 
-    return identical_substrings;
+    return common_substrings;
 }
 
 template<typename InputIterator>
@@ -178,19 +178,17 @@ void suffix_tree::experiment(const char *in_file, const char *out_file)
     for (size_t i = 0; i != sequences.size(); ++i)
     {
         using namespace std::chrono;
-        decltype(system_clock::now()) time_point;
+        decltype(high_resolution_clock::now()) time_point;
 
-        time_point = system_clock::now();
+        time_point = high_resolution_clock::now();
         SuffixTreeType st(sequences[i].cbegin(), sequences[i].cend(), nucleic_acid_pseudo::GAP);
-        for (const auto &i : sequences) st.get_identical_substrings(i.cbegin(), i.cend(), 15);
-        // utils::print_duration(time_point, "                         suffix tree"); std::cout << '\n';
-        time_consumtion[0].push_back(duration_cast<microseconds>(system_clock::now() - time_point).count());
+        for (const auto &i : sequences) st.get_common_substrings(i.cbegin(), i.cend(), 15);
+        time_consumtion[0].push_back(duration_cast<microseconds>(high_resolution_clock::now() - time_point).count());
 
-        time_point = system_clock::now();
+        time_point = high_resolution_clock::now();
         suffix_tree::LeftChildRightSiblingBinaryTree lcrsbt(st);
-        for (const auto &i : sequences) lcrsbt.get_identical_substrings(i.cbegin(), i.cend(), 15).size();
-        // utils::print_duration(time_point, "left-child-right-sibling binary tree"); std::cout << '\n';
-        time_consumtion[1].push_back(duration_cast<microseconds>(system_clock::now() - time_point).count());
+        for (const auto &i : sequences) lcrsbt.get_common_substrings(i.cbegin(), i.cend(), 15).size();
+        time_consumtion[1].push_back(duration_cast<microseconds>(high_resolution_clock::now() - time_point).count());
 
         const size_t num_node = lcrsbt.count_nodes();
         memory_consumtion[1].push_back(num_node * sizeof(suffix_tree::LeftChildRightSiblingBinaryTree::Node));

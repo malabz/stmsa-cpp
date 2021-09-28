@@ -1,7 +1,7 @@
 // stmsa.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-// #ifdef _DEBUG
+// #if defined(_WIN32) && defined(_DEBUG)
 
 // #define _CRTDBG_MAP_ALLOC
 // #include <cstdlib>
@@ -27,13 +27,13 @@ bool parse_arguments(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
-#ifdef _DEBUG
+#if defined(_WIN32) && defined(_DEBUG)
     _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
 
     parse_arguments(argc, argv);
 
-    auto start_point = std::chrono::system_clock::now();
+    const auto start_point = std::chrono::high_resolution_clock::now();
 
     std::ifstream ifs(arguments::in_file_name);
     if (!ifs)
@@ -46,9 +46,9 @@ int main(int argc, char **argv)
     std::cout << pseudo_sequences.size() << " sequences found\n";
     if (pseudo_sequences.size() < 2) exit(0);
 
-    auto align_start = std::chrono::system_clock::now();
+    const auto align_start = std::chrono::high_resolution_clock::now();
     auto insertions = star_alignment::StarAligner::get_gaps(pseudo_sequences);
-    utils::print_duration(align_start, "aligning consumes"); std::cout << '\n';
+    std::cout << "aligning consumes " << (std::chrono::high_resolution_clock::now() - align_start) << '\n';
 
     std::ofstream ofs(arguments::out_file_name);
     if (!ofs)
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     ifs.close();
     ofs.close();
 
-    utils::print_duration(start_point, "total"); std::cout << '\n';
+    std::cout << "total " << (std::chrono::high_resolution_clock::now() - start_point) << '\n';
     print_license();
 
     return 0;
@@ -98,6 +98,12 @@ bool parse_arguments(int argc, char **argv)
     catch(const std::exception &e)
     {
         std::cerr << e.what() << '\n';
+        exit(0);
+    }
+
+    if (arguments::in_file_name == arguments::out_file_name)
+    {
+        std::cerr << "argument error: in file name == out file name\n";
         exit(0);
     }
 

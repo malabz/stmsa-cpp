@@ -6,6 +6,7 @@
 
 namespace pairwise_alignment
 {
+
     constexpr unsigned DEFAULT      = 0x0;
     constexpr unsigned LEFT_ENDING  = 0x1;
     constexpr unsigned RIGHT_ENDING = 0x2;

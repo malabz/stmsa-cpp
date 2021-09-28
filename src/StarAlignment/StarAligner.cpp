@@ -30,14 +30,13 @@ std::vector<size_t> star_alignment::StarAligner::_set_lengths() const
     return lengths;
 }
 
-// to do
 std::vector<unsigned char> star_alignment::StarAligner::_set_centre() const
 {
     size_t centre_index = 0;
 
-    // for (size_t i = 1; i != _row; ++i)
-    //     if (_lengths[i] > _lengths[centre_index])
-    //         centre_index = i;
+    for (size_t i = 1; i != _row; ++i)
+        if (_lengths[i] > _lengths[centre_index])
+            centre_index = i;
     return _sequences[centre_index];
 }
 
@@ -65,35 +64,35 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
 
     for (size_t i = 0; i != _row; ++i)
     {
-        auto identical_substrings = _optimal_path(st.get_identical_substrings(_sequences[i].cbegin(), _sequences[i].cend(), threshold));
+        auto common_substrings = _optimal_path(st.get_common_substrings(_sequences[i].cbegin(), _sequences[i].cend(), threshold));
 
         std::vector<quadra> intervals;
-        intervals.reserve(identical_substrings.size() + 1);
+        intervals.reserve(common_substrings.size() + 1);
 
-        if (identical_substrings.empty())
+        if (common_substrings.empty())
         {
             intervals.push_back(quadra({ 0, _centre.size(), 0, _sequences[i].size() }));
         }
         else
         {
-            if (identical_substrings[0][0] || identical_substrings[0][1])
-                intervals.push_back(quadra({ 0, identical_substrings[0][0], 0, identical_substrings[0][1] }));
+            if (common_substrings[0][0] || common_substrings[0][1])
+                intervals.push_back(quadra({ 0, common_substrings[0][0], 0, common_substrings[0][1] }));
 
-            for (size_t j = 0, end_index = identical_substrings.size() - 1; j != end_index; ++j)
-                if (identical_substrings[j][0] + identical_substrings[j][2] != identical_substrings[j + 1][0] ||
-                    identical_substrings[j][1] + identical_substrings[j][2] != identical_substrings[j + 1][1])
+            for (size_t j = 0, end_index = common_substrings.size() - 1; j != end_index; ++j)
+                if (common_substrings[j][0] + common_substrings[j][2] != common_substrings[j + 1][0] ||
+                    common_substrings[j][1] + common_substrings[j][2] != common_substrings[j + 1][1])
                     intervals.push_back(quadra
                     ({
-                        identical_substrings[j][0] + identical_substrings[j][2], identical_substrings[j + 1][0],
-                        identical_substrings[j][1] + identical_substrings[j][2], identical_substrings[j + 1][1]
+                        common_substrings[j][0] + common_substrings[j][2], common_substrings[j + 1][0],
+                        common_substrings[j][1] + common_substrings[j][2], common_substrings[j + 1][1]
                     }));
 
-            if (identical_substrings.back()[0] + identical_substrings.back()[2] != _centre_len || 
-                identical_substrings.back()[1] + identical_substrings.back()[2] != _lengths[i])
+            if (common_substrings.back()[0] + common_substrings.back()[2] != _centre_len || 
+                common_substrings.back()[1] + common_substrings.back()[2] != _lengths[i])
                 intervals.push_back(quadra
                 ({
-                    identical_substrings.back()[0] + identical_substrings.back()[2], _centre_len,
-                    identical_substrings.back()[1] + identical_substrings.back()[2], _lengths[i]
+                    common_substrings.back()[0] + common_substrings.back()[2], _centre_len,
+                    common_substrings.back()[1] + common_substrings.back()[2], _lengths[i]
                 }));
         }
 
@@ -125,54 +124,54 @@ auto star_alignment::StarAligner::_pairwise_align() const -> std::vector<std::ar
     return all_pairwise_gaps;
 }
 
-auto star_alignment::StarAligner::_optimal_path(const std::vector<triple> &identical_substrings)
+auto star_alignment::StarAligner::_optimal_path(const std::vector<triple> &common_substrings)
         -> std::vector<triple> 
 {
-    std::vector<triple> optimal_identical_substrings;
-    if (identical_substrings.empty()) return optimal_identical_substrings;
+    std::vector<triple> optimal_common_substrings;
+    if (common_substrings.empty()) return optimal_common_substrings;
 
-    const size_t pair_num = identical_substrings.size();
+    const size_t pair_num = common_substrings.size();
     utils::AdjacencyList graph(pair_num + 1);
 
     for (size_t i = 0; i != pair_num; ++i)
     for (size_t j = 0; j != pair_num; ++j)
-        if (i != j && identical_substrings[i][0] + identical_substrings[i][2] < identical_substrings[j][0] + identical_substrings[j][2]
-                   && identical_substrings[i][1] + identical_substrings[i][2] < identical_substrings[j][1] + identical_substrings[j][2])
+        if (i != j && common_substrings[i][0] + common_substrings[i][2] < common_substrings[j][0] + common_substrings[j][2]
+                   && common_substrings[i][1] + common_substrings[i][2] < common_substrings[j][1] + common_substrings[j][2])
         {
             const int possible_overlap = std::max(
-                    static_cast<int>(identical_substrings[i][0] + identical_substrings[i][2]) - static_cast<int>(identical_substrings[j][0]), 
-                    static_cast<int>(identical_substrings[i][1] + identical_substrings[i][2]) - static_cast<int>(identical_substrings[j][1]));
+                    static_cast<int>(common_substrings[i][0] + common_substrings[i][2]) - static_cast<int>(common_substrings[j][0]), 
+                    static_cast<int>(common_substrings[i][1] + common_substrings[i][2]) - static_cast<int>(common_substrings[j][1]));
 
-            unsigned weight = identical_substrings[j][2];
+            unsigned weight = common_substrings[j][2];
             if (possible_overlap > 0) weight -= possible_overlap;
             graph.add_edge(i + 1, j + 1, weight);
         }
 
     for (size_t i = 0; i != pair_num; ++i)
-        graph.add_edge(0, i + 1, identical_substrings[i][2]);
+        graph.add_edge(0, i + 1, common_substrings[i][2]);
 
     const auto optimal_path = graph.get_longest_path();
 
-    optimal_identical_substrings.reserve(optimal_path.size());
-    optimal_identical_substrings.push_back(triple( { identical_substrings[optimal_path[0] - 1][0],
-                                                     identical_substrings[optimal_path[0] - 1][1],
-                                                     identical_substrings[optimal_path[0] - 1][2] }));
+    optimal_common_substrings.reserve(optimal_path.size());
+    optimal_common_substrings.push_back(triple( { common_substrings[optimal_path[0] - 1][0],
+                                                     common_substrings[optimal_path[0] - 1][1],
+                                                     common_substrings[optimal_path[0] - 1][2] }));
 
     for (size_t i = 0; i < optimal_path.size() - 1; ++i)
     {
         size_t new_len = graph.get_weight(optimal_path[i], optimal_path[i + 1]);
-        size_t old_len = identical_substrings[optimal_path[i + 1] - 1][2];
+        size_t old_len = common_substrings[optimal_path[i + 1] - 1][2];
         int difference = static_cast<int>(old_len) - static_cast<int>(new_len);
 
-        size_t lhs_first = identical_substrings[optimal_path[i + 1] - 1][0];
-        size_t rhs_first = identical_substrings[optimal_path[i + 1] - 1][1];
+        size_t lhs_first = common_substrings[optimal_path[i + 1] - 1][0];
+        size_t rhs_first = common_substrings[optimal_path[i + 1] - 1][1];
         if (difference > 0)
         { lhs_first += difference; rhs_first += difference; }
 
-        optimal_identical_substrings.push_back(triple({ lhs_first, rhs_first, new_len }));
+        optimal_common_substrings.push_back(triple({ lhs_first, rhs_first, new_len }));
     }
 
-    return optimal_identical_substrings;
+    return optimal_common_substrings;
 }
 
 void star_alignment::StarAligner::_append(const std::vector<size_t> &src_gaps, std::vector<utils::Insertion> &des_gaps, size_t start)

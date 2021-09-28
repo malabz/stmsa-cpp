@@ -20,9 +20,6 @@ namespace utils
     std::vector<unsigned char> to_pseudo(const std::string &str);
     std::string from_pseudo(const std::vector<unsigned char> &pseu);
 
-    void print_duration(std::chrono::system_clock::time_point time_point);
-    void print_duration(std::chrono::system_clock::time_point time_point, const std::string &info);
-
     template<typename InputIterator, typename OutputIterator>
     void transform_to_pseudo(InputIterator src_first, InputIterator src_last, OutputIterator des)
     {
@@ -68,4 +65,10 @@ namespace utils
         }
     }
 
+}
+
+template<typename Representation, typename Period>
+std::ostream &operator<<(std::ostream &os, std::chrono::duration<Representation, Period> duration)
+{
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << "ms";
 }

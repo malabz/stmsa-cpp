@@ -28,7 +28,7 @@ namespace suffix_tree
         ~LeftChildRightSiblingBinaryTree();
 
         template <typename RandomAccessIterator>
-        std::vector<std::array<size_t, 3>> get_identical_substrings(RandomAccessIterator first, RandomAccessIterator last, size_t threshold) const;
+        std::vector<std::array<size_t, 3>> get_common_substrings(RandomAccessIterator first, RandomAccessIterator last, size_t threshold) const;
 
         template<typename InputIterator>
         std::vector<size_t> search_for_prefix(InputIterator first, InputIterator last, size_t threshold) const;

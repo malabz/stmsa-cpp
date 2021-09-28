@@ -15,7 +15,7 @@ namespace pairwise_alignment
     public:
         using gap_vector_type = std::vector<size_t>;
 
-        NeedlemanWunshReusable(const ScoringMatrixType& scoring_matrix, int gap_open, int gap_extention)
+        NeedlemanWunshReusable(const ScoringMatrixType &scoring_matrix, int gap_open, int gap_extention)
                 : _scoring_matrix(scoring_matrix)
                 , _op(gap_open)
                 , _ex(gap_extention)
@@ -217,7 +217,7 @@ namespace pairwise_alignment
         static constexpr int NEGATIVE_INFINITY = std::numeric_limits<int>::min() / 2;
 
         // scoring
-        const ScoringMatrixType& _scoring_matrix;
+        const ScoringMatrixType &_scoring_matrix;
 
         int _op, _l_op, _r_op;
         int _ex, _l_ex, _r_ex;
