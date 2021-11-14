@@ -64,7 +64,7 @@ std::vector<std::vector<unsigned char>> utils::read_to_pseudo(std::istream &is)
     std::string each_sequence;
     for (bool flag = false; std::getline(is, each_line); )
     {
-        if (each_line.size() == 0)
+        if (each_line.size() == 0 || (each_line.size() == 1 && (int)each_line[0]==13)) //跳过空行
             continue;
 
         if (each_line[0] == '>')
@@ -79,6 +79,10 @@ std::vector<std::vector<unsigned char>> utils::read_to_pseudo(std::istream &is)
         else if (flag)
         {
             each_sequence += each_line;
+            #if defined(__unix__) || defined(__unix) || defined(unix)
+            if ((int)(*each_line.rbegin()) == 13)
+                each_sequence.pop_back();
+            #endif
         }
     }
     sequences.push_back(to_pseudo(each_sequence));
@@ -95,7 +99,7 @@ void utils::insert_and_write(std::ostream &os, std::istream &is, const std::vect
     std::string each_sequence_aligned;
     for (unsigned count = 0, length, flag = false; std::getline(is, each_line); )
     {
-        if (each_line.size() == 0)
+        if (each_line.size() == 0 || (each_line.size() == 1 && (int)each_line[0] == 13)) //跳过空行
             continue;
 
         if (each_line[0] == '>')
@@ -133,6 +137,10 @@ void utils::insert_and_write(std::ostream &os, std::istream &is, const std::vect
         else if (flag)
         {
             each_sequence += each_line;
+            #if defined(__unix__) || defined(__unix) || defined(unix)
+            if ((int)(*each_line.rbegin()) == 13)
+                each_sequence.pop_back();
+            #endif
         }
     }
 
