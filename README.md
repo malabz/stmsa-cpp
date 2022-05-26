@@ -12,8 +12,6 @@ stmsa-x.x.x-win-x64.exe --help
 
 ## Build
 
- msvc
-
  clang
 
 ## Dependencies
