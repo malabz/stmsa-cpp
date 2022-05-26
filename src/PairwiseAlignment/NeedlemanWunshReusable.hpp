@@ -2,6 +2,7 @@
 
 #include "PairwiseAlignment.hpp"
 
+#include <tuple>
 #include <vector>
 #include <algorithm>
 
