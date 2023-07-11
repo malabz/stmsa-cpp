@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <iterator>
+#include <algorithm>
 
 namespace utils
 {
